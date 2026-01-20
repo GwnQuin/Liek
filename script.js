@@ -169,8 +169,16 @@ const quizQuestions = [
         question: "Ademt Quin nog?",
         answers: [
             { text: "Ja", path: "continue", action: "positive", isCorrect: true },
-            { text: "Nee", path: "continue", action: "negative", isCorrect: false }
+            { text: "Nee", path: "continue", action: "murderQuestion", isCorrect: false }
         ]
+    },
+    {
+        question: "Heb je hem vermoord ofzo? 😰",
+        answers: [
+            { text: "Ja", path: "continue", action: "veryNegative", isCorrect: false },
+            { text: "Nee", path: "continue", action: "negative", isCorrect: true }
+        ],
+        isConditional: true
     },
     {
         question: "Ben je vreemd gegaan?",
@@ -189,7 +197,7 @@ const quizQuestions = [
     {
         question: "Ben je een bleg?",
         answers: [
-            { text: "Ja", path: "fail", action: "instantFail", isCorrect: false },
+            { text: "Ja", path: "continue", action: "softFail", isCorrect: false },
             { text: "Nee", path: "continue", action: "good", isCorrect: true }
         ]
     },
@@ -199,16 +207,41 @@ const quizQuestions = [
             { text: "Ja", path: "continue", action: "wrong", isCorrect: false },
             { text: "Nee", path: "continue", action: "good", isCorrect: true }
         ]
+    },
+    {
+        question: "Ben je frans?",
+        answers: [
+            { text: "Ja", path: "continue", action: "softFail", isCorrect: false },
+            { text: "Nee", path: "continue", action: "good", isCorrect: true }
+        ]
+    },
+    {
+        question: "Ben je duits?",
+        answers: [
+            { text: "Ja", path: "continue", action: "softFail", isCorrect: false },
+            { text: "Nee", path: "continue", action: "good", isCorrect: true }
+        ]
+    },
+    {
+        question: "Is zij knap?",
+        hasImage: true,
+        imagePath: "IMG_4715.JPG",
+        answers: [
+            { text: "Ja", path: "continue", action: "good", isCorrect: true },
+            { text: "Nee", path: "continue", action: "explode", isCorrect: false }
+        ]
     }
 ];
 
 let currentQuestionIndex = 0;
+let askedMurderQuestion = false;
 
 function startQuiz() {
     currentQuestionIndex = 0;
     quizScore = 0;
     hasFailed = false;
     wrongAnswers = [];
+    askedMurderQuestion = false;
     renderQuestion();
 }
 
@@ -221,16 +254,40 @@ function renderQuestion() {
         return;
     }
     
-    const question = quizQuestions[currentQuestionIndex];
+    let question = quizQuestions[currentQuestionIndex];
+    
+    // Skip conditional murder question if "Nee" wasn't clicked on "Ademt Quin nog?"
+    if (question.isConditional && !askedMurderQuestion) {
+        // Skip the murder question if it shouldn't be asked
+        currentQuestionIndex++;
+        if (currentQuestionIndex >= quizQuestions.length) {
+            showResult();
+            return;
+        }
+        renderQuestion();
+        return;
+    }
+    
+    // Reset the flag after showing the murder question
+    if (question.question === "Heb je hem vermoord ofzo? 😰") {
+        askedMurderQuestion = false;
+    }
+    
     const progress = ((currentQuestionIndex + 1) / quizQuestions.length) * 100;
     
     progressFill.style.width = progress + '%';
     
+    let imageHTML = '';
+    if (question.hasImage) {
+        imageHTML = `<div style="margin: 20px 0;"><img src="${question.imagePath}" alt="Liek" style="max-width: 100%; max-height: 400px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);"></div>`;
+    }
+    
     questionContainer.innerHTML = `
         <div class="question">${question.question}</div>
-        <div class="answer-options">
-            ${question.answers.map((answer) => 
-                `<button class="answer-btn" onclick="selectAnswer('${answer.action}', ${currentQuestionIndex}, ${answer.isCorrect})">${answer.text}</button>`
+        ${imageHTML}
+        <div class="answer-options" id="answer-options">
+            ${question.answers.map((answer, index) => 
+                `<button class="answer-btn" id="answer-btn-${index}" onclick="selectAnswer('${answer.action}', ${currentQuestionIndex}, ${answer.isCorrect})">${answer.text}</button>`
             ).join('')}
         </div>
     `;
@@ -271,7 +328,41 @@ function selectAnswer(action, questionIndex, isCorrect) {
             currentQuestionIndex++;
             renderQuestion();
             break;
+        case "murderQuestion":
+            quizScore -= 2;
+            askedMurderQuestion = true;
+            // Go to murder question (it's the next one)
+            currentQuestionIndex++;
+            renderQuestion();
+            break;
+        case "veryNegative":
+            quizScore -= 5;
+            currentQuestionIndex++;
+            renderQuestion();
+            break;
+        case "softFail":
+            quizScore -= 1;
+            currentQuestionIndex++;
+            renderQuestion();
+            break;
         case "wrong":
+            quizScore -= 1;
+            currentQuestionIndex++;
+            renderQuestion();
+            break;
+        case "explode":
+            // Explode the button
+            const noBtn = document.getElementById('answer-btn-1');
+            if (noBtn) {
+                noBtn.style.transition = 'all 0.5s ease';
+                noBtn.style.transform = 'scale(2) rotate(360deg)';
+                noBtn.style.opacity = '0';
+                noBtn.style.pointerEvents = 'none';
+                
+                setTimeout(() => {
+                    noBtn.remove();
+                }, 500);
+            }
             quizScore -= 1;
             currentQuestionIndex++;
             renderQuestion();
@@ -296,6 +387,18 @@ function showResult() {
             title: "FAIL! ❌",
             message: "Quin houdt niet meer van je!",
             emoji: "😢"
+        };
+    } else if (wrongAnswers.length === 1) {
+        result = {
+            title: "Ja maar dit ziet er niet goed naar uit 😟",
+            message: "Quin houdt nog van je, maar je moet voorzichtiger zijn!",
+            emoji: "😔"
+        };
+    } else if (wrongAnswers.length >= 2) {
+        result = {
+            title: "PARDON??? 😡",
+            message: "Wat is dit?! Quin houdt nog van je, maar dit is niet oké!",
+            emoji: "😠"
         };
     } else if (quizScore >= 8) {
         result = {
@@ -348,7 +451,7 @@ function showResult() {
         <button onclick="restartQuiz()" class="btn btn-yes" style="margin-top: 30px;">
             Opnieuw proberen 🔄
         </button>
-        <p style="font-size: 1.5rem; color: #667eea; margin-top: 30px;">
+        <p style="font-size: 1.5rem; color: #1a237e; margin-top: 30px;">
             Met heel veel liefde,<br>
             Quin 💕
         </p>
@@ -401,7 +504,7 @@ function showFailResult(message) {
         <button onclick="restartQuiz()" class="btn btn-yes" style="margin-top: 30px;">
             Opnieuw proberen 🔄
         </button>
-        <p style="font-size: 1.5rem; color: #667eea; margin-top: 30px;">
+        <p style="font-size: 1.5rem; color: #1a237e; margin-top: 30px;">
             Met heel veel liefde,<br>
             Quin 💕
         </p>

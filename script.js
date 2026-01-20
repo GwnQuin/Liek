@@ -6,10 +6,6 @@ const quizSection = document.getElementById('quiz-section');
 const angerMessage = document.getElementById('no-anger');
 
 let noClickCount = 0;
-let inactivityTimer = null;
-let angle = 0;
-let radius = 150;
-let isMoving = false;
 
 const angryMessages = [
     "Hey! 😠 Niet klikken!",
@@ -21,19 +17,14 @@ const angryMessages = [
     "IK ZEG NEE! PUNT UIT! 😤💢"
 ];
 
-// Make the No button move around the Yes button (Quin) in a circle
+// Make the No button move away when hovered or clicked
 noBtn.addEventListener('mouseenter', () => {
-    startMovingAroundQuin();
-    resetInactivityTimer();
-});
-
-noBtn.addEventListener('mousemove', () => {
-    resetInactivityTimer();
+    moveButtonAway(noBtn);
 });
 
 noBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    startMovingAroundQuin();
+    moveButtonAway(noBtn);
     noClickCount++;
     
     if (noClickCount <= angryMessages.length) {
@@ -41,51 +32,100 @@ noBtn.addEventListener('click', (e) => {
     } else {
         showAngerMessage("OKÉ OKÉ! IK GEEF TOE! 😭 Quin houdt WEL van je!");
     }
-    
-    resetInactivityTimer();
 });
 
-function startMovingAroundQuin() {
-    if (isMoving) return;
-    isMoving = true;
-    noBtn.classList.add('moving');
-    moveAroundQuin();
-}
-
-function moveAroundQuin() {
-    if (!isMoving) return;
-    
-    const container = noBtn.parentElement;
-    const yesRect = yesBtn.getBoundingClientRect();
+function moveButtonAway(button) {
+    const container = button.parentElement;
     const containerRect = container.getBoundingClientRect();
+    const yesRect = yesBtn.getBoundingClientRect();
+    const buttonRect = button.getBoundingClientRect();
     
-    // Calculate center position of Yes button relative to container
-    const centerX = yesRect.left - containerRect.left + yesRect.width / 2;
-    const centerY = yesRect.top - containerRect.top + yesRect.height / 2;
+    const containerCenterX = containerRect.width / 2;
+    const containerCenterY = containerRect.height / 2;
+    const yesCenterX = yesRect.left - containerRect.left + yesRect.width / 2;
+    const yesCenterY = yesRect.top - containerRect.top + yesRect.height / 2;
     
-    // Move in circle around Yes button
-    angle += 0.2;
-    const x = centerX + Math.cos(angle) * radius - noBtn.offsetWidth / 2;
-    const y = centerY + Math.sin(angle) * radius - noBtn.offsetHeight / 2;
+    let attempts = 0;
+    let newX, newY;
     
-    noBtn.style.position = 'absolute';
-    noBtn.style.left = x + 'px';
-    noBtn.style.top = y + 'px';
+    // Try to find a position away from Yes button
+    do {
+        const maxX = containerRect.width - buttonRect.width - 20;
+        const maxY = containerRect.height - buttonRect.height - 20;
+        
+        // Random position but try to be away from center
+        newX = Math.random() * maxX;
+        newY = Math.random() * maxY;
+        
+        // Calculate distance from Yes button center
+        const newCenterX = newX + buttonRect.width / 2;
+        const newCenterY = newY + buttonRect.height / 2;
+        const distanceFromYes = Math.sqrt(
+            Math.pow(newCenterX - yesCenterX, 2) + 
+            Math.pow(newCenterY - yesCenterY, 2)
+        );
+        
+        // Minimum distance from Yes button (at least 150px)
+        const minDistance = 150;
+        
+        if (distanceFromYes >= minDistance || attempts > 50) {
+            break;
+        }
+        attempts++;
+    } while (attempts < 100);
     
-    requestAnimationFrame(moveAroundQuin);
+    button.style.position = 'absolute';
+    button.style.left = newX + 'px';
+    button.style.top = newY + 'px';
+    button.style.transition = 'all 0.3s ease';
 }
 
-function resetInactivityTimer() {
-    clearTimeout(inactivityTimer);
-    inactivityTimer = setTimeout(() => {
-        stopMoving();
-    }, 5000);
+// Timer functionality
+const startDate = new Date('2026-01-12T18:32:00');
+const timerElement = document.getElementById('timer');
+
+function updateTimer() {
+    const now = new Date();
+    const diff = now - startDate;
+    
+    const seconds = Math.floor(diff / 1000) % 60;
+    const minutes = Math.floor(diff / 1000 / 60) % 60;
+    const hours = Math.floor(diff / 1000 / 60 / 60) % 24;
+    const days = Math.floor(diff / 1000 / 60 / 60 / 24) % 7;
+    const weeks = Math.floor(diff / 1000 / 60 / 60 / 24 / 7) % 4;
+    const months = Math.floor(diff / 1000 / 60 / 60 / 24 / 30.44);
+    
+    timerElement.innerHTML = `
+        <div class="timer-item">
+            <span class="timer-number">${months}</span>
+            <span class="timer-label-small">${months === 1 ? 'Maand' : 'Maanden'}</span>
+        </div>
+        <div class="timer-item">
+            <span class="timer-number">${weeks}</span>
+            <span class="timer-label-small">${weeks === 1 ? 'Week' : 'Weken'}</span>
+        </div>
+        <div class="timer-item">
+            <span class="timer-number">${days}</span>
+            <span class="timer-label-small">${days === 1 ? 'Dag' : 'Dagen'}</span>
+        </div>
+        <div class="timer-item">
+            <span class="timer-number">${hours}</span>
+            <span class="timer-label-small">${hours === 1 ? 'Uur' : 'Uren'}</span>
+        </div>
+        <div class="timer-item">
+            <span class="timer-number">${minutes}</span>
+            <span class="timer-label-small">${minutes === 1 ? 'Minuut' : 'Minuten'}</span>
+        </div>
+        <div class="timer-item">
+            <span class="timer-number">${seconds}</span>
+            <span class="timer-label-small">${seconds === 1 ? 'Seconde' : 'Seconden'}</span>
+        </div>
+    `;
 }
 
-function stopMoving() {
-    isMoving = false;
-    noBtn.classList.remove('moving');
-}
+// Update timer every second
+setInterval(updateTimer, 1000);
+updateTimer();
 
 function showAngerMessage(message) {
     angerMessage.textContent = message;
@@ -305,6 +345,9 @@ function showResult() {
         <h2 class="result-title">${result.title}</h2>
         <p class="result-message">${result.message}</p>
         ${wrongAnswersSection}
+        <button onclick="restartQuiz()" class="btn btn-yes" style="margin-top: 30px;">
+            Opnieuw proberen 🔄
+        </button>
         <p style="font-size: 1.5rem; color: #667eea; margin-top: 30px;">
             Met heel veel liefde,<br>
             Quin 💕
@@ -313,6 +356,18 @@ function showResult() {
     
     resultContainer.classList.remove('hidden');
 }
+
+// Make restartQuiz globally accessible
+window.restartQuiz = function() {
+    quizSection.classList.remove('active');
+    quizSection.classList.add('hidden');
+    initialSection.classList.remove('hidden');
+    initialSection.classList.add('active');
+    noClickCount = 0;
+    document.getElementById('result-container').classList.add('hidden');
+    document.getElementById('question-container').classList.remove('hidden');
+    startQuiz();
+};
 
 function showFailResult(message) {
     const questionContainer = document.getElementById('question-container');
@@ -343,6 +398,9 @@ function showFailResult(message) {
         <div class="result-image">😡</div>
         <h2 class="result-title" style="color: #f5576c;">${message}</h2>
         ${wrongAnswersSection}
+        <button onclick="restartQuiz()" class="btn btn-yes" style="margin-top: 30px;">
+            Opnieuw proberen 🔄
+        </button>
         <p style="font-size: 1.5rem; color: #667eea; margin-top: 30px;">
             Met heel veel liefde,<br>
             Quin 💕

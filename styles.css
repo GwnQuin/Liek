@@ -48,6 +48,46 @@ body {
     }
 }
 
+.timer-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.timer-label {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.timer {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.timer-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 70px;
+}
+
+.timer-number {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.timer-label-small {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
 .title {
     font-size: 3rem;
     color: #667eea;
@@ -254,5 +294,25 @@ body {
     
     .question {
         font-size: 1.2rem;
+    }
+    
+    .timer {
+        gap: 10px;
+    }
+    
+    .timer-item {
+        min-width: 50px;
+    }
+    
+    .timer-number {
+        font-size: 1.5rem;
+    }
+    
+    .timer-label-small {
+        font-size: 0.75rem;
+    }
+    
+    .timer-label {
+        font-size: 1rem;
     }
 }

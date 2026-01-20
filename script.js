@@ -351,21 +351,69 @@ function selectAnswer(action, questionIndex, isCorrect) {
             renderQuestion();
             break;
         case "explode":
-            // Explode the button
+            // Explode the button with animation
             const noBtn = document.getElementById('answer-btn-1');
             if (noBtn) {
-                noBtn.style.transition = 'all 0.5s ease';
-                noBtn.style.transform = 'scale(2) rotate(360deg)';
-                noBtn.style.opacity = '0';
+                // Prevent further clicks
                 noBtn.style.pointerEvents = 'none';
                 
+                // Explosion animation
+                noBtn.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                noBtn.style.transform = 'scale(3) rotate(720deg)';
+                noBtn.style.opacity = '0';
+                
+                // Add explosion particles effect
+                const container = noBtn.parentElement;
+                const rect = noBtn.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                const x = rect.left - containerRect.left + rect.width / 2;
+                const y = rect.top - containerRect.top + rect.height / 2;
+                
+                // Create explosion particles
+                for (let i = 0; i < 8; i++) {
+                    const particle = document.createElement('div');
+                    particle.style.position = 'absolute';
+                    particle.style.left = x + 'px';
+                    particle.style.top = y + 'px';
+                    particle.style.width = '10px';
+                    particle.style.height = '10px';
+                    particle.style.backgroundColor = '#f5576c';
+                    particle.style.borderRadius = '50%';
+                    particle.style.pointerEvents = 'none';
+                    particle.style.zIndex = '1000';
+                    
+                    const angle = (i / 8) * Math.PI * 2;
+                    const distance = 100;
+                    const endX = x + Math.cos(angle) * distance;
+                    const endY = y + Math.sin(angle) * distance;
+                    
+                    container.style.position = 'relative';
+                    container.appendChild(particle);
+                    
+                    setTimeout(() => {
+                        particle.style.transition = 'all 0.5s ease-out';
+                        particle.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
+                        particle.style.opacity = '0';
+                    }, 10);
+                    
+                    setTimeout(() => {
+                        particle.remove();
+                    }, 600);
+                }
+                
+                // Remove button after animation
                 setTimeout(() => {
                     noBtn.remove();
-                }, 500);
+                }, 600);
+                
+                // Track wrong answer
+                if (questionIndex < quizQuestions.length) {
+                    const question = quizQuestions[questionIndex];
+                    wrongAnswers.push(question.question);
+                }
+                quizScore -= 1;
             }
-            quizScore -= 1;
-            currentQuestionIndex++;
-            renderQuestion();
+            // Don't go to next question - force user to click "Ja"
             break;
         default:
             currentQuestionIndex++;

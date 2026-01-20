@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voor Lieke ❤️</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Initial Button Section -->
+        <section id="initial-section" class="section active">
+            <div class="content">
+                <h1 class="title">Hey Lieke! 👋</h1>
+                <p class="subtitle">Laten we iets belangrijks checken...</p>
+                <div class="button-container">
+                    <button id="yes-btn" class="btn btn-yes">
+                        Ja! 💕
+                    </button>
+                    <button id="no-btn" class="btn btn-no">
+                        Nee 😢
+                    </button>
+                </div>
+                <div id="no-anger" class="anger-message hidden"></div>
+            </div>
+        </section>
+
+        <!-- Quiz Section -->
+        <section id="quiz-section" class="section hidden">
+            <div class="content">
+                <div class="quiz-container">
+                    <div class="quiz-header">
+                        <h2 class="quiz-title">Quiz: Houdt Quin nog van je? 💝</h2>
+                        <div class="progress-bar">
+                            <div id="progress-fill" class="progress-fill"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="question-container" class="question-container">
+                        <!-- Questions will be dynamically loaded here -->
+                    </div>
+
+                    <div id="result-container" class="result-container hidden">
+                        <!-- Results will be shown here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

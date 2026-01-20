@@ -6,6 +6,11 @@ const quizSection = document.getElementById('quiz-section');
 const angerMessage = document.getElementById('no-anger');
 
 let noClickCount = 0;
+let inactivityTimer = null;
+let angle = 0;
+let radius = 150;
+let isMoving = false;
+
 const angryMessages = [
     "Hey! 😠 Niet klikken!",
     "STOP! 😡 Ik ben serieus!",
@@ -16,15 +21,19 @@ const angryMessages = [
     "IK ZEG NEE! PUNT UIT! 😤💢"
 ];
 
-// Make the No button move away when hovered or clicked
+// Make the No button move around the Yes button (Quin) in a circle
 noBtn.addEventListener('mouseenter', () => {
-    moveButton(noBtn);
-    noBtn.classList.add('moving');
+    startMovingAroundQuin();
+    resetInactivityTimer();
+});
+
+noBtn.addEventListener('mousemove', () => {
+    resetInactivityTimer();
 });
 
 noBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    moveButton(noBtn);
+    startMovingAroundQuin();
     noClickCount++;
     
     if (noClickCount <= angryMessages.length) {
@@ -33,31 +42,49 @@ noBtn.addEventListener('click', (e) => {
         showAngerMessage("OKÉ OKÉ! IK GEEF TOE! 😭 Quin houdt WEL van je!");
     }
     
-    setTimeout(() => {
-        noBtn.classList.add('moving');
-    }, 50);
+    resetInactivityTimer();
 });
 
-function moveButton(button) {
-    const container = button.parentElement;
+function startMovingAroundQuin() {
+    if (isMoving) return;
+    isMoving = true;
+    noBtn.classList.add('moving');
+    moveAroundQuin();
+}
+
+function moveAroundQuin() {
+    if (!isMoving) return;
+    
+    const container = noBtn.parentElement;
+    const yesRect = yesBtn.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
-    const buttonRect = button.getBoundingClientRect();
     
-    // Random position within container bounds
-    const maxX = containerRect.width - buttonRect.width - 20;
-    const maxY = containerRect.height - buttonRect.height - 20;
+    // Calculate center position of Yes button relative to container
+    const centerX = yesRect.left - containerRect.left + yesRect.width / 2;
+    const centerY = yesRect.top - containerRect.top + yesRect.height / 2;
     
-    const randomX = Math.random() * maxX;
-    const randomY = Math.random() * maxY;
+    // Move in circle around Yes button
+    angle += 0.2;
+    const x = centerX + Math.cos(angle) * radius - noBtn.offsetWidth / 2;
+    const y = centerY + Math.sin(angle) * radius - noBtn.offsetHeight / 2;
     
-    button.style.position = 'absolute';
-    button.style.left = randomX + 'px';
-    button.style.top = randomY + 'px';
-    button.style.transform = 'scale(0.95)';
+    noBtn.style.position = 'absolute';
+    noBtn.style.left = x + 'px';
+    noBtn.style.top = y + 'px';
     
-    setTimeout(() => {
-        button.style.transform = 'scale(1)';
-    }, 200);
+    requestAnimationFrame(moveAroundQuin);
+}
+
+function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => {
+        stopMoving();
+    }, 5000);
+}
+
+function stopMoving() {
+    isMoving = false;
+    noBtn.classList.remove('moving');
 }
 
 function showAngerMessage(message) {
@@ -79,88 +106,69 @@ yesBtn.addEventListener('click', () => {
 });
 
 // Quiz logic
+let quizScore = 0;
+let hasFailed = false;
+let wrongAnswers = [];
+
 const quizQuestions = [
     {
-        question: "Hoe vaak denk je dat Quin aan jou denkt per dag?",
+        question: "Heb je een pik inmiddel?",
         answers: [
-            { text: "1-5 keer", path: "a" },
-            { text: "6-10 keer", path: "b" },
-            { text: "Meer dan 100 keer (waarschijnlijk)", path: "c" },
-            { text: "Constant, zonder te stoppen", path: "d" }
+            { text: "Ja", path: "fail", action: "instantFail", isCorrect: false },
+            { text: "Nee", path: "continue", action: "good", isCorrect: true }
         ]
     },
     {
-        question: "Wat is Quin's favoriete moment met jou?",
+        question: "Ben je een furry?",
         answers: [
-            { text: "Samen koffie drinken", path: "a" },
-            { text: "Samen lachen", path: "b" },
-            { text: "Elk moment samen", path: "c" },
-            { text: "Wanneer jij gelukkig bent", path: "d" }
+            { text: "Ja", path: "fail", action: "instantFail", isCorrect: false },
+            { text: "Nee", path: "continue", action: "good", isCorrect: true }
         ]
     },
     {
-        question: "Als Quin een superkracht kon kiezen, wat zou het zijn?",
+        question: "Ademt Quin nog?",
         answers: [
-            { text: "Vliegen", path: "a" },
-            { text: "Onzichtbaar zijn", path: "b" },
-            { text: "Tijdreizen", path: "c" },
-            { text: "Je gedachten kunnen lezen (om te zien hoeveel jij ook van hem houdt)", path: "d" }
+            { text: "Ja", path: "continue", action: "positive", isCorrect: true },
+            { text: "Nee", path: "continue", action: "negative", isCorrect: false }
         ]
     },
     {
-        question: "Wat maakt Quin het gelukkigst?",
+        question: "Ben je vreemd gegaan?",
         answers: [
-            { text: "Goed eten", path: "a" },
-            { text: "Een goede film", path: "b" },
-            { text: "Zijn hobby's", path: "c" },
-            { text: "Wanneer jij lacht of gelukkig bent", path: "d" }
+            { text: "Ja", path: "fail", action: "cheatFail", isCorrect: false },
+            { text: "Nee", path: "continue", action: "veryPositive", isCorrect: true }
         ]
     },
     {
-        question: "Hoe zou Quin jou beschrijven?",
+        question: "Besta je nog?",
         answers: [
-            { text: "Leuk", path: "a" },
-            { text: "Aardig", path: "b" },
-            { text: "Speciaal", path: "c" },
-            { text: "De meest prachtige, geweldige, perfecte persoon die er bestaat", path: "d" }
+            { text: "Ja", path: "continue", action: "positive", isCorrect: true },
+            { text: "Nee", path: "continue", action: "positive", isCorrect: true }
+        ]
+    },
+    {
+        question: "Ben je een bleg?",
+        answers: [
+            { text: "Ja", path: "fail", action: "instantFail", isCorrect: false },
+            { text: "Nee", path: "continue", action: "good", isCorrect: true }
+        ]
+    },
+    {
+        question: "Heb je een boy best friend?",
+        answers: [
+            { text: "Ja", path: "continue", action: "wrong", isCorrect: false },
+            { text: "Nee", path: "continue", action: "good", isCorrect: true }
         ]
     }
 ];
 
-const resultPaths = {
-    "aaaaa": {
-        title: "Hmm... 🤔",
-        message: "Je kent Quin misschien niet zo goed, maar dat is oké! Hij houdt nog steeds heel veel van je, zelfs als je niet alles weet.",
-        emoji: "💝"
-    },
-    "bbbbb": {
-        title: "Je kent hem een beetje! 😊",
-        message: "Je weet wel wat over Quin, maar er is nog veel meer te ontdekken. Het goede nieuws: hij houdt ZEKER nog van je!",
-        emoji: "💕"
-    },
-    "ccccc": {
-        title: "Goed gedaan! 🎉",
-        message: "Je kent Quin best goed! En het belangrijkste: hij houdt nog steeds heel veel van je, zelfs meer dan je denkt!",
-        emoji: "💖"
-    },
-    "ddddd": {
-        title: "PERFECT! 🌟",
-        message: "Je kent Quin perfect! En het zal je niet verbazen dat hij nog steeds (en altijd) heel veel van je houdt. Je bent speciaal voor hem!",
-        emoji: "💗"
-    },
-    "default": {
-        title: "Geweldig! 💝",
-        message: "Quin houdt nog steeds heel veel van je, ongeacht je antwoorden! Deze quiz was eigenlijk alleen maar om te bevestigen wat je al wist: hij is verliefd op jou!",
-        emoji: "💕"
-    }
-};
-
 let currentQuestionIndex = 0;
-let selectedPath = "";
 
 function startQuiz() {
     currentQuestionIndex = 0;
-    selectedPath = "";
+    quizScore = 0;
+    hasFailed = false;
+    wrongAnswers = [];
     renderQuestion();
 }
 
@@ -168,7 +176,7 @@ function renderQuestion() {
     const questionContainer = document.getElementById('question-container');
     const progressFill = document.getElementById('progress-fill');
     
-    if (currentQuestionIndex >= quizQuestions.length) {
+    if (currentQuestionIndex >= quizQuestions.length || hasFailed) {
         showResult();
         return;
     }
@@ -181,17 +189,57 @@ function renderQuestion() {
     questionContainer.innerHTML = `
         <div class="question">${question.question}</div>
         <div class="answer-options">
-            ${question.answers.map((answer, index) => 
-                `<button class="answer-btn" onclick="selectAnswer('${answer.path}')">${answer.text}</button>`
+            ${question.answers.map((answer) => 
+                `<button class="answer-btn" onclick="selectAnswer('${answer.action}', ${currentQuestionIndex}, ${answer.isCorrect})">${answer.text}</button>`
             ).join('')}
         </div>
     `;
 }
 
-function selectAnswer(path) {
-    selectedPath += path;
-    currentQuestionIndex++;
-    renderQuestion();
+function selectAnswer(action, questionIndex, isCorrect) {
+    // Track wrong answers
+    if (!isCorrect && questionIndex < quizQuestions.length) {
+        const question = quizQuestions[questionIndex];
+        wrongAnswers.push(question.question);
+    }
+    switch(action) {
+        case "instantFail":
+            hasFailed = true;
+            showFailResult("FAIL! ❌ Quin houdt niet meer van je!");
+            break;
+        case "cheatFail":
+            hasFailed = true;
+            showFailResult("Hoe durf je! Dit wordt naar Quin verstuurd! 😡");
+            break;
+        case "good":
+            quizScore += 1;
+            currentQuestionIndex++;
+            renderQuestion();
+            break;
+        case "positive":
+            quizScore += 2;
+            currentQuestionIndex++;
+            renderQuestion();
+            break;
+        case "veryPositive":
+            quizScore += 3;
+            currentQuestionIndex++;
+            renderQuestion();
+            break;
+        case "negative":
+            quizScore -= 2;
+            currentQuestionIndex++;
+            renderQuestion();
+            break;
+        case "wrong":
+            quizScore -= 1;
+            currentQuestionIndex++;
+            renderQuestion();
+            break;
+        default:
+            currentQuestionIndex++;
+            renderQuestion();
+    }
 }
 
 function showResult() {
@@ -202,12 +250,99 @@ function showResult() {
     progressFill.style.width = '100%';
     questionContainer.classList.add('hidden');
     
-    let result = resultPaths[selectedPath] || resultPaths.default;
+    let result;
+    if (hasFailed) {
+        result = {
+            title: "FAIL! ❌",
+            message: "Quin houdt niet meer van je!",
+            emoji: "😢"
+        };
+    } else if (quizScore >= 8) {
+        result = {
+            title: "PERFECT! 🌟",
+            message: "Quin houdt nog heel veel van je! Je bent perfect!",
+            emoji: "💗"
+        };
+    } else if (quizScore >= 5) {
+        result = {
+            title: "Geweldig! 💝",
+            message: "Quin houdt nog steeds van je!",
+            emoji: "💕"
+        };
+    } else if (quizScore >= 0) {
+        result = {
+            title: "Oké... 🤔",
+            message: "Quin houdt nog van je, maar je moet beter je best doen!",
+            emoji: "💝"
+        };
+    } else {
+        result = {
+            title: "Hmm... 😟",
+            message: "Quin houdt nog van je, maar je hebt minpunten gekregen.",
+            emoji: "💔"
+        };
+    }
+    
+    let wrongAnswersSection = '';
+    if (wrongAnswers.length > 0) {
+        wrongAnswersSection = `
+            <div style="margin-top: 40px; padding: 20px; background: #ffe6e6; border-radius: 10px; text-align: left;">
+                <h3 style="color: #d32f2f; margin-bottom: 15px; font-size: 1.5rem;">Wat je fout deed: 😔</h3>
+                <ul style="list-style: none; padding: 0;">
+                    ${wrongAnswers.map((answer, index) => 
+                        `<li style="margin: 10px 0; padding-left: 25px; position: relative;">
+                            <span style="position: absolute; left: 0;">❌</span>
+                            ${answer}
+                        </li>`
+                    ).join('')}
+                </ul>
+            </div>
+        `;
+    }
     
     resultContainer.innerHTML = `
         <div class="result-image">${result.emoji}</div>
         <h2 class="result-title">${result.title}</h2>
         <p class="result-message">${result.message}</p>
+        ${wrongAnswersSection}
+        <p style="font-size: 1.5rem; color: #667eea; margin-top: 30px;">
+            Met heel veel liefde,<br>
+            Quin 💕
+        </p>
+    `;
+    
+    resultContainer.classList.remove('hidden');
+}
+
+function showFailResult(message) {
+    const questionContainer = document.getElementById('question-container');
+    const resultContainer = document.getElementById('result-container');
+    const progressFill = document.getElementById('progress-fill');
+    
+    progressFill.style.width = '100%';
+    questionContainer.classList.add('hidden');
+    
+    let wrongAnswersSection = '';
+    if (wrongAnswers.length > 0) {
+        wrongAnswersSection = `
+            <div style="margin-top: 30px; padding: 20px; background: #ffe6e6; border-radius: 10px; text-align: left;">
+                <h3 style="color: #d32f2f; margin-bottom: 15px; font-size: 1.5rem;">Wat je fout deed: 😔</h3>
+                <ul style="list-style: none; padding: 0;">
+                    ${wrongAnswers.map((answer, index) => 
+                        `<li style="margin: 10px 0; padding-left: 25px; position: relative;">
+                            <span style="position: absolute; left: 0;">❌</span>
+                            ${answer}
+                        </li>`
+                    ).join('')}
+                </ul>
+            </div>
+        `;
+    }
+    
+    resultContainer.innerHTML = `
+        <div class="result-image">😡</div>
+        <h2 class="result-title" style="color: #f5576c;">${message}</h2>
+        ${wrongAnswersSection}
         <p style="font-size: 1.5rem; color: #667eea; margin-top: 30px;">
             Met heel veel liefde,<br>
             Quin 💕

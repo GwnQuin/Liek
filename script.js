@@ -301,31 +301,11 @@ function renderQuestion() {
         </div>
     `;
     
-    // Add aggressive movement to "nee" button for "Is zij knap?" question
+    // For "Is zij knap?" question: "nee" button stays static (no movement)
     if (question.question === "Is zij knap?") {
         // Reset click count for this question
         noButtonClickCount = 0;
-        // Use longer timeout to ensure DOM is ready
-        setTimeout(() => {
-            const noBtn = document.getElementById('answer-btn-1');
-            if (noBtn) {
-                // Reset any existing positioning and styles
-                noBtn.style.position = '';
-                noBtn.style.left = '';
-                noBtn.style.top = '';
-                noBtn.style.transition = '';
-                // Force reflow to reset
-                void noBtn.offsetHeight;
-                
-                // Initial positioning - make sure it's not on top of Yes button
-                positionButtonAwayFromYes(noBtn);
-                
-                // Small delay before starting aggressive movement to ensure positioning is set
-                setTimeout(() => {
-                    makeButtonMoveAggressively(noBtn);
-                }, 50);
-            }
-        }, 200);
+        // Button stays in normal position (static, under "ja" button)
     }
 }
 
@@ -536,11 +516,13 @@ function makeButtonMoveAggressively(button) {
 
 function selectAnswer(action, questionIndex, isCorrect) {
     // Track wrong answers (but NEVER for explode action, regardless of isCorrect value)
-    if (!isCorrect && action !== "explode" && questionIndex < quizQuestions.length) {
+    // Explode action should NEVER be tracked as wrong answer
+    if (action === "explode") {
+        // Skip all wrong answer tracking for explode
+    } else if (!isCorrect && questionIndex < quizQuestions.length) {
         const question = quizQuestions[questionIndex];
         wrongAnswers.push(question.question);
     }
-    // For explode action, never track as wrong answer
     switch(action) {
         case "instantFail":
             hasFailed = true;
@@ -601,15 +583,14 @@ function selectAnswer(action, questionIndex, isCorrect) {
                 noBtn.style.pointerEvents = 'none';
                 
                 if (noButtonClickCount < 4) {
-                    // Explosion animation with pieces breaking and raining for first 3 clicks
+                    // Immediate explosion animation with pieces breaking and raining
                     explodeButtonSimple(noBtn);
                     // Re-enable after animation
                     setTimeout(() => {
                         noBtn.style.pointerEvents = 'auto';
                         // Re-attach click handler
                         noBtn.setAttribute('onclick', `selectAnswer('explode', ${questionIndex}, true)`);
-                        makeButtonMoveAggressively(noBtn);
-                    }, 1300);
+                    }, 1600);
                 } else {
                     // After 4 clicks: full sequence with AK47
                     handleAK47Sequence(noBtn);

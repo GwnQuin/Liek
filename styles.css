@@ -52,6 +52,22 @@ body {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     text-align: center;
     animation: fadeIn 0.5s ease-in;
+    position: relative;
+}
+
+.update-marker {
+    position: absolute;
+    left: 16px;
+    top: 16px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #ffeb3b;
+    color: #111;
+    font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+    z-index: 5;
 }
 
 @keyframes fadeIn {

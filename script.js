@@ -35,11 +35,14 @@ const noBtnClickHandler = function(e) {
     
     // First click: make button run away, then activate yes button
     if (initialNoButtonClickCount === 0) {
-        // Set flag FIRST to prevent any other handlers immediately
+        // Set flags FIRST to prevent any other handlers immediately
         isProcessingNoButton = true;
-        
-        // Also set a global flag on window to catch any other scripts
         window.__blockNavigation = true;
+        
+        // Remove yesBtn event listener IMMEDIATELY to prevent it from firing
+        if (yesBtnClickHandler) {
+            yesBtn.removeEventListener('click', yesBtnClickHandler);
+        }
         
         // Disable button immediately to prevent any further clicks
         noBtn.style.pointerEvents = 'none';

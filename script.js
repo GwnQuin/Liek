@@ -23,13 +23,18 @@ noBtn.addEventListener('mouseenter', () => {
     moveButtonAway(noBtn);
 });
 
-noBtn.addEventListener('click', (e) => {
+// Remove any existing click listeners and add new one with capture phase
+const noBtnClickHandler = function(e) {
     e.preventDefault();
     e.stopPropagation();
-    e.stopImmediatePropagation(); // Prevent any other handlers
+    e.stopImmediatePropagation();
     
     // First click: make button run away, then activate yes button
     if (initialNoButtonClickCount === 0) {
+        // Disable button immediately to prevent any further clicks
+        noBtn.style.pointerEvents = 'none';
+        
+        // Move button away first
         moveButtonAway(noBtn);
         initialNoButtonClickCount++;
         noClickCount++;
@@ -43,7 +48,8 @@ noBtn.addEventListener('click', (e) => {
             quizSection.classList.add('active');
             startQuiz();
         }, 1000); // 1 second delay
-        return false; // Prevent default and stop propagation
+        
+        return false;
     }
     
     moveButtonAway(noBtn);
@@ -61,8 +67,12 @@ noBtn.addEventListener('click', (e) => {
         handleInitialAK47Sequence(noBtn);
     }
     
-    return false; // Always prevent default
-});
+    return false;
+};
+
+// Remove old listener and add new one with capture phase (runs first)
+noBtn.removeEventListener('click', noBtnClickHandler);
+noBtn.addEventListener('click', noBtnClickHandler, true); // Use capture phase
 
 function moveButtonAway(button) {
     const container = button.parentElement;
@@ -70,20 +80,22 @@ function moveButtonAway(button) {
     const yesRect = yesBtn.getBoundingClientRect();
     const buttonRect = button.getBoundingClientRect();
     
-    const containerCenterX = containerRect.width / 2;
-    const containerCenterY = containerRect.height / 2;
     const yesCenterX = yesRect.left - containerRect.left + yesRect.width / 2;
     const yesCenterY = yesRect.top - containerRect.top + yesRect.height / 2;
     
     let attempts = 0;
     let newX, newY;
     
+    // Larger minimum distance on mobile, smaller on desktop
+    const isMobile = window.innerWidth <= 600;
+    const minDistance = isMobile ? 250 : 200; // Much larger distance on mobile
+    
     // Try to find a position away from Yes button
     do {
         const maxX = containerRect.width - buttonRect.width - 20;
         const maxY = containerRect.height - buttonRect.height - 20;
         
-        // Random position but try to be away from center
+        // Random position
         newX = Math.random() * maxX;
         newY = Math.random() * maxY;
         
@@ -95,19 +107,27 @@ function moveButtonAway(button) {
             Math.pow(newCenterY - yesCenterY, 2)
         );
         
-        // Minimum distance from Yes button (at least 150px)
-        const minDistance = 150;
+        // Also check if buttons would overlap
+        const newRight = newX + buttonRect.width;
+        const newBottom = newY + buttonRect.height;
+        const yesLeft = yesRect.left - containerRect.left;
+        const yesTop = yesRect.top - containerRect.top;
+        const yesRight = yesLeft + yesRect.width;
+        const yesBottom = yesTop + yesRect.height;
         
-        if (distanceFromYes >= minDistance || attempts > 50) {
+        const noOverlap = (newRight < yesLeft || newX > yesRight || newBottom < yesTop || newY > yesBottom);
+        
+        if ((distanceFromYes >= minDistance && noOverlap) || attempts > 100) {
             break;
         }
         attempts++;
-    } while (attempts < 100);
+    } while (attempts < 200);
     
     button.style.position = 'absolute';
     button.style.left = newX + 'px';
     button.style.top = newY + 'px';
     button.style.transition = 'all 0.3s ease';
+    button.style.zIndex = '10'; // Make sure it's above other elements
 }
 
 // Timer functionality

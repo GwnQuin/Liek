@@ -934,6 +934,75 @@ function breakButtonIntoPieces(button, callback) {
 }
 
 // Functions for initial section AK47 sequence
+function handleInitialAK47Sequence(noBtn) {
+    const initialSection = document.getElementById('initial-section');
+    const content = initialSection.querySelector('.content');
+    
+    // Prevent further clicks
+    noBtn.style.pointerEvents = 'none';
+    
+    // Step 1: Show text "Okay dan dan doen we het maar zo"
+    const textElement = document.createElement('div');
+    textElement.textContent = 'Okay dan dan doen we het maar zo';
+    textElement.style.position = 'absolute';
+    textElement.style.left = '20px';
+    textElement.style.top = '50%';
+    textElement.style.transform = 'translateY(-50%)';
+    textElement.style.fontSize = window.innerWidth > 600 ? '1.8rem' : '1.3rem';
+    textElement.style.color = '#1a237e';
+    textElement.style.fontWeight = '600';
+    textElement.style.zIndex = '2000';
+    textElement.style.opacity = '0';
+    textElement.style.transition = 'opacity 0.5s ease-in';
+    textElement.style.maxWidth = window.innerWidth > 600 ? 'none' : 'calc(50% - 20px)';
+    content.style.position = 'relative';
+    content.appendChild(textElement);
+    
+    setTimeout(() => {
+        textElement.style.opacity = '1';
+    }, 100);
+    
+    // Step 2: Show AK47 image after text appears
+    setTimeout(() => {
+        const ak47Img = document.createElement('img');
+        ak47Img.src = 'ak47.png';
+        ak47Img.style.position = 'absolute';
+        ak47Img.style.left = window.innerWidth > 600 ? '50px' : '20px';
+        ak47Img.style.top = '50%';
+        ak47Img.style.transform = 'translateY(-50%)';
+        ak47Img.style.width = window.innerWidth > 600 ? '300px' : '150px';
+        ak47Img.style.height = 'auto';
+        ak47Img.style.zIndex = '2000';
+        ak47Img.style.opacity = '0';
+        ak47Img.style.transition = 'opacity 0.5s ease-in';
+        ak47Img.style.maxWidth = '100%';
+        content.appendChild(ak47Img);
+        
+        setTimeout(() => {
+            ak47Img.style.opacity = '1';
+        }, 100);
+        
+        // Step 3: Shoot 4 bullets
+        setTimeout(() => {
+            shootBulletsInitial(ak47Img, noBtn, content, () => {
+                // Step 4: After all bullets, add bleeding effect
+                setTimeout(() => {
+                    addBleedingEffectInitial(noBtn, content, () => {
+                        // Step 5: Break button into pieces and make it fall
+                        breakButtonIntoPiecesInitial(noBtn, content, () => {
+                            // Step 6: Remove text and AK47 after button falls
+                            setTimeout(() => {
+                                textElement.remove();
+                                ak47Img.remove();
+                            }, 500);
+                        });
+                    });
+                }, 500);
+            });
+        }, 1000);
+    }, 500);
+}
+
 function shootBulletsInitial(ak47Img, targetBtn, container, callback) {
     const ak47Rect = ak47Img.getBoundingClientRect();
     const targetRect = targetBtn.getBoundingClientRect();

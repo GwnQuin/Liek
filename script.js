@@ -25,6 +25,21 @@ noBtn.addEventListener('mouseenter', () => {
 
 noBtn.addEventListener('click', (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    // First click: make button run away, then activate yes button
+    if (initialNoButtonClickCount === 0) {
+        moveButtonAway(noBtn);
+        initialNoButtonClickCount++;
+        noClickCount++;
+        
+        // After button moves away, activate yes button
+        setTimeout(() => {
+            yesBtn.click();
+        }, 500);
+        return;
+    }
+    
     moveButtonAway(noBtn);
     initialNoButtonClickCount++;
     noClickCount++;
@@ -582,19 +597,8 @@ function selectAnswer(action, questionIndex, isCorrect) {
                 // Prevent further clicks immediately
                 noBtn.style.pointerEvents = 'none';
                 
-                if (noButtonClickCount < 4) {
-                    // Immediate explosion animation with pieces breaking and raining
-                    explodeButtonSimple(noBtn);
-                    // Re-enable after animation
-                    setTimeout(() => {
-                        noBtn.style.pointerEvents = 'auto';
-                        // Re-attach click handler
-                        noBtn.setAttribute('onclick', `selectAnswer('explode', ${questionIndex}, true)`);
-                    }, 1600);
-                } else {
-                    // After 4 clicks: full sequence with AK47
-                    handleAK47Sequence(noBtn);
-                }
+                // Always just explode - no AK47 sequence for "Is zij knap?" question
+                explodeButtonPermanent(noBtn);
             }
             // Don't track as wrong answer and don't go to next question
             return; // Use return instead of break to ensure no further processing
@@ -678,6 +682,73 @@ function explodeButtonSimple(button) {
         button.style.opacity = '1';
         button.style.pointerEvents = 'auto';
     }, 1650); // Slightly longer to allow pieces to fall
+}
+
+function explodeButtonPermanent(button) {
+    const questionContainer = document.getElementById('question-container');
+    const rect = button.getBoundingClientRect();
+    const containerRect = questionContainer.getBoundingClientRect();
+    const x = rect.left - containerRect.left;
+    const y = rect.top - containerRect.top;
+    
+    // Break button into more pieces that look like shards
+    const numPieces = 20;
+    const pieces = [];
+    
+    for (let i = 0; i < numPieces; i++) {
+        const piece = document.createElement('div');
+        const pieceWidth = (rect.width / 6) + Math.random() * (rect.width / 8);
+        const pieceHeight = (rect.height / 4) + Math.random() * (rect.height / 6);
+        const pieceX = (i % 6) * (rect.width / 6) + Math.random() * 10 - 5;
+        const pieceY = Math.floor(i / 6) * (rect.height / 4) + Math.random() * 10 - 5;
+        
+        const computedStyle = window.getComputedStyle(button);
+        
+        piece.style.position = 'absolute';
+        piece.style.left = (x + pieceX) + 'px';
+        piece.style.top = (y + pieceY) + 'px';
+        piece.style.width = pieceWidth + 'px';
+        piece.style.height = pieceHeight + 'px';
+        piece.style.backgroundColor = computedStyle.backgroundColor;
+        piece.style.border = computedStyle.border;
+        piece.style.borderRadius = Math.random() < 0.3 ? '2px' : '0px';
+        piece.style.clipPath = `polygon(${Math.random() * 30}% ${Math.random() * 30}%, ${70 + Math.random() * 30}% ${Math.random() * 30}%, ${70 + Math.random() * 30}% ${70 + Math.random() * 30}%, ${Math.random() * 30}% ${70 + Math.random() * 30}%)`;
+        piece.style.zIndex = '1600';
+        piece.style.opacity = '0.9';
+        piece.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+        piece.style.overflow = 'hidden';
+        piece.style.pointerEvents = 'none';
+        
+        questionContainer.style.position = 'relative';
+        questionContainer.appendChild(piece);
+        pieces.push(piece);
+        
+        const angle = (Math.random() - 0.5) * Math.PI * 0.8;
+        const horizontalDistance = (Math.random() - 0.5) * 250;
+        const upwardDistance = -100 - Math.random() * 150;
+        const downwardDistance = window.innerHeight + 400;
+        const rotation = (Math.random() - 0.5) * 1080;
+        
+        setTimeout(() => {
+            piece.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            piece.style.transform = `translate(${horizontalDistance * 0.5}px, ${upwardDistance}px) rotate(${rotation * 0.3}deg)`;
+        }, 10);
+        
+        setTimeout(() => {
+            piece.style.transition = 'all 1.2s cubic-bezier(0.4, 0, 0.6, 1)';
+            piece.style.transform = `translate(${horizontalDistance}px, ${downwardDistance}px) rotate(${rotation}deg)`;
+            piece.style.opacity = '0';
+        }, 420);
+    }
+    
+    // Hide and remove button permanently
+    button.style.opacity = '0';
+    button.style.pointerEvents = 'none';
+    
+    setTimeout(() => {
+        pieces.forEach(piece => piece.remove());
+        button.remove(); // Remove button permanently, don't restore
+    }, 1650);
 }
 
 function handleAK47Sequence(noBtn) {

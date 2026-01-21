@@ -18,17 +18,39 @@ const angryMessages = [
     "IK ZEG NEE! PUNT UIT! 😤💢"
 ];
 
+// Flag to prevent any navigation
+let isProcessingNoButton = false;
+
 // Remove any existing click listeners and add new one with capture phase
 const noBtnClickHandler = function(e) {
+    // Block everything immediately
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
     
+    // If already processing, ignore
+    if (isProcessingNoButton) {
+        return false;
+    }
+    
     // First click: make button run away, then activate yes button
     if (initialNoButtonClickCount === 0) {
+        // Set flag to prevent any other handlers
+        isProcessingNoButton = true;
+        
         // Disable button immediately to prevent any further clicks
         noBtn.style.pointerEvents = 'none';
         noBtn.disabled = true;
+        noBtn.setAttribute('disabled', 'disabled');
+        
+        // Also disable the container to prevent any bubbling
+        const container = noBtn.parentElement;
+        if (container) {
+            container.style.pointerEvents = 'none';
+            setTimeout(() => {
+                container.style.pointerEvents = 'auto';
+            }, 1100);
+        }
         
         // Move button away first (synchronous, no delay)
         moveButtonAway(noBtn);
@@ -37,6 +59,8 @@ const noBtnClickHandler = function(e) {
         
         // Wait for button to actually move (after transition), then activate yes button
         setTimeout(() => {
+            // Reset flag
+            isProcessingNoButton = false;
             // Manually trigger the yes button click handler
             initialSection.classList.remove('active');
             initialSection.classList.add('hidden');
@@ -76,13 +100,23 @@ if (noBtn) {
     
     // Add mouseenter listener
     noBtn.addEventListener('mouseenter', () => {
-        if (initialNoButtonClickCount === 0) {
+        if (initialNoButtonClickCount === 0 && !isProcessingNoButton) {
             moveButtonAway(noBtn);
         }
     });
     
     // Add click listener with capture phase (runs first, before bubbling)
+    // Also add to capture phase on document to catch everything
+    document.addEventListener('click', function(e) {
+        if (e.target === noBtn || noBtn.contains(e.target)) {
+            noBtnClickHandler(e);
+        }
+    }, true);
+    
     noBtn.addEventListener('click', noBtnClickHandler, true);
+    
+    // Also prevent any form submission or navigation
+    noBtn.type = 'button'; // Ensure it's not a submit button
 }
 
 function moveButtonAway(button) {

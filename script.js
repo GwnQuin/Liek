@@ -1053,6 +1053,16 @@ function shootBulletsInitial(ak47Img, targetBtn, container, callback) {
             return;
         }
         
+        // Add recoil effect to AK47
+        const ak47ImgElement = document.getElementById('ak47-img-initial');
+        if (ak47ImgElement) {
+            ak47ImgElement.style.transition = 'transform 0.1s ease-out';
+            ak47ImgElement.style.transform = 'translateY(-50%) translateX(-5px) rotate(-2deg)';
+            setTimeout(() => {
+                ak47ImgElement.style.transform = 'translateY(-50%)';
+            }, 100);
+        }
+        
         const bullet = document.createElement('div');
         bullet.style.position = 'absolute';
         bullet.style.left = ak47X + 'px';
@@ -1068,7 +1078,7 @@ function shootBulletsInitial(ak47Img, targetBtn, container, callback) {
         setTimeout(() => {
             const dx = targetX - ak47X;
             const dy = targetY - ak47Y;
-            bullet.style.transition = 'all 0.2s linear';
+            bullet.style.transition = 'all 0.1s linear'; // Faster bullets
             bullet.style.transform = `translate(${dx}px, ${dy}px)`;
         }, 10);
         
@@ -1092,8 +1102,8 @@ function shootBulletsInitial(ak47Img, targetBtn, container, callback) {
             
             setTimeout(() => {
                 shootSingleBullet();
-            }, 300);
-        }, 220);
+            }, 200); // Faster shooting
+        }, 120); // Faster bullet travel time
     }
     
     shootSingleBullet();

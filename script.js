@@ -40,8 +40,8 @@ const noBtnClickHandler = function(e) {
         window.__blockNavigation = true;
         
         // Remove yesBtn event listener IMMEDIATELY to prevent it from firing
-        if (yesBtnClickHandler) {
-            yesBtn.removeEventListener('click', yesBtnClickHandler);
+        if (window.__yesBtnClickHandler) {
+            yesBtn.removeEventListener('click', window.__yesBtnClickHandler);
         }
         
         // Disable button immediately to prevent any further clicks
@@ -72,8 +72,7 @@ const noBtnClickHandler = function(e) {
             }, 1100);
         }
         
-        // Block yes button completely by removing and re-adding listener
-        yesBtn.removeEventListener('click', yesBtnClickHandler);
+        // Block yes button completely with additional blocker
         const yesBtnClickBlocker = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -103,7 +102,9 @@ const noBtnClickHandler = function(e) {
             }
             // Re-add original handler after a small delay
             setTimeout(() => {
-                yesBtn.addEventListener('click', yesBtnClickHandler);
+                if (window.__yesBtnClickHandler) {
+                    yesBtn.addEventListener('click', window.__yesBtnClickHandler);
+                }
             }, 50);
         }, 1000);
         
@@ -295,7 +296,8 @@ function showAngerMessage(message) {
 }
 
 // When Yes button is clicked, show quiz
-const yesBtnClickHandler = function(e) {
+// Define handler early so it can be referenced
+let yesBtnClickHandler = function(e) {
     // Block if no button is being processed or navigation is blocked
     if (isProcessingNoButton || window.__blockNavigation) {
         e.preventDefault();
@@ -315,6 +317,9 @@ const yesBtnClickHandler = function(e) {
     quizSection.classList.add('active');
     startQuiz();
 };
+
+// Store reference globally so it can be removed later
+window.__yesBtnClickHandler = yesBtnClickHandler;
 
 yesBtn.addEventListener('click', yesBtnClickHandler);
 

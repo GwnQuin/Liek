@@ -305,21 +305,27 @@ function renderQuestion() {
     if (question.question === "Is zij knap?") {
         // Reset click count for this question
         noButtonClickCount = 0;
+        // Use longer timeout to ensure DOM is ready
         setTimeout(() => {
             const noBtn = document.getElementById('answer-btn-1');
             if (noBtn) {
-                // Reset any existing positioning
+                // Reset any existing positioning and styles
                 noBtn.style.position = '';
                 noBtn.style.left = '';
                 noBtn.style.top = '';
-                // Force reflow
-                noBtn.offsetHeight;
+                noBtn.style.transition = '';
+                // Force reflow to reset
+                void noBtn.offsetHeight;
+                
                 // Initial positioning - make sure it's not on top of Yes button
                 positionButtonAwayFromYes(noBtn);
-                // Make button move aggressively
-                makeButtonMoveAggressively(noBtn);
+                
+                // Small delay before starting aggressive movement to ensure positioning is set
+                setTimeout(() => {
+                    makeButtonMoveAggressively(noBtn);
+                }, 50);
             }
-        }, 150);
+        }, 200);
     }
 }
 
@@ -507,16 +513,25 @@ function makeButtonMoveAggressively(button) {
         setTimeout(() => makeButtonMoveAggressively(newButton), 30);
     };
     
-    newButton.addEventListener('mouseenter', moveHandler);
-    newButton.addEventListener('touchstart', moveHandler);
-    newButton.addEventListener('touchmove', moveHandler);
-    
-    // Also move on click attempt
-    newButton.addEventListener('mousedown', (e) => {
+    // Remove any existing listeners by using named function
+    const mouseEnterHandler = moveHandler;
+    const touchStartHandler = moveHandler;
+    const touchMoveHandler = moveHandler;
+    const mouseDownHandler = (e) => {
         if (e.button === 0) {
             setTimeout(() => moveHandler(), 5);
         }
-    });
+    };
+    
+    newButton.addEventListener('mouseenter', mouseEnterHandler);
+    newButton.addEventListener('touchstart', touchStartHandler);
+    newButton.addEventListener('touchmove', touchMoveHandler);
+    newButton.addEventListener('mousedown', mouseDownHandler);
+    
+    // Also trigger movement immediately on load to show it's working
+    setTimeout(() => {
+        moveHandler();
+    }, 100);
 }
 
 function selectAnswer(action, questionIndex, isCorrect) {

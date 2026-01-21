@@ -570,7 +570,7 @@ function handleAK47Sequence(noBtn) {
         const ak47Img = document.createElement('img');
         ak47Img.src = 'ak47.png';
         ak47Img.style.position = 'absolute';
-        ak47Img.style.right = window.innerWidth > 600 ? '50px' : '20px';
+        ak47Img.style.left = window.innerWidth > 600 ? '50px' : '20px';
         ak47Img.style.top = '50%';
         ak47Img.style.transform = 'translateY(-50%)';
         ak47Img.style.width = window.innerWidth > 600 ? '300px' : '150px';

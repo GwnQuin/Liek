@@ -136,6 +136,7 @@ const noBtnClickHandler = function(e) {
         // Reset flags after a delay to allow button to move, but DO NOT start quiz
         setTimeout(() => {
             // #region agent log
+            console.log('[DEBUG v3] Resetting flags after button move (NO quiz start)', {isProcessingNoButton,__blockNavigation:window.__blockNavigation,codeVersion:'v3-fixed-no-auto-start'});
             fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:137',message:'Resetting flags after button move (NO quiz start) - NEW CODE VERSION v3',data:{isProcessingNoButton,__blockNavigation:window.__blockNavigation,codeVersion:'v3-fixed-no-auto-start'},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'C'})}).catch(()=>{});
             // #endregion
             
@@ -146,8 +147,12 @@ const noBtnClickHandler = function(e) {
             window.__blockNavigation = false;
             
             // #region agent log
+            console.log('[DEBUG v3] Flags reset - NO startQuiz() called', {isProcessingNoButton,__blockNavigation:window.__blockNavigation});
             fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:145',message:'Flags reset - NO startQuiz() called - v3',data:{isProcessingNoButton,__blockNavigation:window.__blockNavigation},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'C'})}).catch(()=>{});
             // #endregion
+            
+            // VERIFICATION: If you see this log but still get redirected, there's another code path calling startQuiz()
+            console.log('[DEBUG v3] VERIFICATION: setTimeout completed - startQuiz() was NOT called');
         }, 1000); // 1 second delay after button starts moving
         
         return false;

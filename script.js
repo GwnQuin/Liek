@@ -137,14 +137,20 @@ if (noBtn) {
     });
     
     // Add click listener with capture phase (runs first, before bubbling)
-    // Also add to capture phase on document to catch everything
+    noBtn.addEventListener('click', noBtnClickHandler, true);
+    
+    // Also add document-level blocker to prevent any navigation during processing
     document.addEventListener('click', function(e) {
-        if (e.target === noBtn || noBtn.contains(e.target)) {
-            noBtnClickHandler(e);
+        if (isProcessingNoButton) {
+            // Block all clicks during processing
+            if (e.target === yesBtn || yesBtn.contains(e.target)) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                return false;
+            }
         }
     }, true);
-    
-    noBtn.addEventListener('click', noBtnClickHandler, true);
     
     // Also prevent any form submission or navigation
     noBtn.type = 'button'; // Ensure it's not a submit button

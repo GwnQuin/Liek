@@ -49,33 +49,50 @@ const noBtnClickHandler = function(e) {
         yesBtn.style.opacity = '0.5';
         yesBtn.style.cursor = 'not-allowed';
         
-        // Also disable the container to prevent any bubbling
+        // Also disable the container and yes button to prevent any bubbling
         const container = noBtn.parentElement;
         if (container) {
             container.style.pointerEvents = 'none';
+            // Add event listener to container to block all clicks
+            const containerClickBlocker = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            };
+            container.addEventListener('click', containerClickBlocker, true);
             setTimeout(() => {
                 container.style.pointerEvents = 'auto';
+                container.removeEventListener('click', containerClickBlocker, true);
             }, 1100);
         }
         
+        // Block yes button completely
+        const yesBtnClickBlocker = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+        };
+        yesBtn.addEventListener('click', yesBtnClickBlocker, true);
+        
         // Move button away first (synchronous, no delay)
-    moveButtonAway(noBtn);
+        moveButtonAway(noBtn);
         initialNoButtonClickCount++;
-    noClickCount++;
-    
+        noClickCount++;
+        
         // Re-enable yes button after 1 second cooldown
         setTimeout(() => {
             yesBtn.style.pointerEvents = 'auto';
             yesBtn.disabled = false;
             yesBtn.style.opacity = '1';
             yesBtn.style.cursor = 'pointer';
+            yesBtn.removeEventListener('click', yesBtnClickBlocker, true);
         }, 1000);
         
         // Wait for button to actually move (after transition), then activate yes button
         setTimeout(() => {
             // Reset flag
             isProcessingNoButton = false;
-            // Manually trigger the yes button click handler
+            // Manually trigger the yes button click handler (bypassing event)
             initialSection.classList.remove('active');
             initialSection.classList.add('hidden');
             quizSection.classList.remove('hidden');
@@ -246,7 +263,15 @@ function showAngerMessage(message) {
 }
 
 // When Yes button is clicked, show quiz
-yesBtn.addEventListener('click', () => {
+yesBtn.addEventListener('click', (e) => {
+    // Block if no button is being processed
+    if (isProcessingNoButton) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+    }
+    
     initialSection.classList.remove('active');
     initialSection.classList.add('hidden');
     quizSection.classList.remove('hidden');

@@ -92,16 +92,21 @@ const noBtnClickHandler = function(e) {
         }, 1000);
         
         // Wait for button to actually move (after transition), then activate yes button
-        setTimeout(() => {
-            // Reset flags
+        window.__quizStartTimeout = setTimeout(() => {
+            // Reset flags FIRST
             isProcessingNoButton = false;
             window.__blockNavigation = false;
-            // Manually trigger the yes button click handler (bypassing event)
-            initialSection.classList.remove('active');
-            initialSection.classList.add('hidden');
-            quizSection.classList.remove('hidden');
-            quizSection.classList.add('active');
-            startQuiz();
+            
+            // Small delay to ensure flags are reset before starting quiz
+            setTimeout(() => {
+                // Manually trigger the yes button click handler (bypassing event)
+                initialSection.classList.remove('active');
+                initialSection.classList.add('hidden');
+                quizSection.classList.remove('hidden');
+                quizSection.classList.add('active');
+                startQuiz();
+                window.__quizStartTimeout = null;
+            }, 50); // Small delay to ensure flags are processed
         }, 1000); // 1 second delay after button starts moving
         
         return false;

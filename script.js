@@ -611,16 +611,17 @@ function explodeButtonSimple(button) {
     const x = rect.left - containerRect.left;
     const y = rect.top - containerRect.top;
     
-    // Break button into pieces that explode and rain down
-    const numPieces = 15;
+    // Break button into more pieces that look like shards
+    const numPieces = 20; // More pieces for shard effect
     const pieces = [];
     
     for (let i = 0; i < numPieces; i++) {
         const piece = document.createElement('div');
-        const pieceWidth = rect.width / 5;
-        const pieceHeight = rect.height / 3;
-        const pieceX = (i % 5) * pieceWidth;
-        const pieceY = Math.floor(i / 5) * pieceHeight;
+        // Create irregular shard shapes
+        const pieceWidth = (rect.width / 6) + Math.random() * (rect.width / 8);
+        const pieceHeight = (rect.height / 4) + Math.random() * (rect.height / 6);
+        const pieceX = (i % 6) * (rect.width / 6) + Math.random() * 10 - 5;
+        const pieceY = Math.floor(i / 6) * (rect.height / 4) + Math.random() * 10 - 5;
         
         // Get button's computed style to preserve appearance
         const computedStyle = window.getComputedStyle(button);
@@ -632,7 +633,9 @@ function explodeButtonSimple(button) {
         piece.style.height = pieceHeight + 'px';
         piece.style.backgroundColor = computedStyle.backgroundColor;
         piece.style.border = computedStyle.border;
-        piece.style.borderRadius = '5px';
+        // Make it look more like a shard (irregular shape)
+        piece.style.borderRadius = Math.random() < 0.3 ? '2px' : '0px';
+        piece.style.clipPath = `polygon(${Math.random() * 30}% ${Math.random() * 30}%, ${70 + Math.random() * 30}% ${Math.random() * 30}%, ${70 + Math.random() * 30}% ${70 + Math.random() * 30}%, ${Math.random() * 30}% ${70 + Math.random() * 30}%)`;
         piece.style.zIndex = '1600';
         piece.style.opacity = '0.9';
         piece.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
@@ -643,29 +646,38 @@ function explodeButtonSimple(button) {
         questionContainer.appendChild(piece);
         pieces.push(piece);
         
-        // Animate piece flying out and raining down
-        const angle = (Math.random() - 0.5) * Math.PI * 0.6; // Less horizontal spread
-        const horizontalDistance = (Math.random() - 0.5) * 200;
-        const verticalDistance = window.innerHeight + 400; // Fall down further
-        const rotation = (Math.random() - 0.5) * 720;
+        // Animate piece: first explode upward, then fall down
+        const angle = (Math.random() - 0.5) * Math.PI * 0.8;
+        const horizontalDistance = (Math.random() - 0.5) * 250;
+        const upwardDistance = -100 - Math.random() * 150; // First go up
+        const downwardDistance = window.innerHeight + 400; // Then fall down
+        const rotation = (Math.random() - 0.5) * 1080;
         
+        // Phase 1: Explode upward
         setTimeout(() => {
-            piece.style.transition = 'all 1.5s cubic-bezier(0.4, 0, 0.6, 1)';
-            piece.style.transform = `translate(${horizontalDistance}px, ${verticalDistance}px) rotate(${rotation}deg)`;
-            piece.style.opacity = '0';
+            piece.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            piece.style.transform = `translate(${horizontalDistance * 0.5}px, ${upwardDistance}px) rotate(${rotation * 0.3}deg)`;
         }, 10);
+        
+        // Phase 2: Fall down
+        setTimeout(() => {
+            piece.style.transition = 'all 1.2s cubic-bezier(0.4, 0, 0.6, 1)';
+            piece.style.transform = `translate(${horizontalDistance}px, ${downwardDistance}px) rotate(${rotation}deg)`;
+            piece.style.opacity = '0';
+        }, 420);
     }
     
     // Hide original button temporarily
     button.style.opacity = '0';
     button.style.pointerEvents = 'none';
     
-    // Remove pieces after animation and restore button
+    // Remove pieces after animation and restore button immediately
     setTimeout(() => {
         pieces.forEach(piece => piece.remove());
+        // Button comes back immediately
         button.style.opacity = '1';
         button.style.pointerEvents = 'auto';
-    }, 1600);
+    }, 1650); // Slightly longer to allow pieces to fall
 }
 
 function handleAK47Sequence(noBtn) {
@@ -695,13 +707,13 @@ function handleAK47Sequence(noBtn) {
         textElement.style.opacity = '1';
     }, 100);
     
-        // Step 2: Show AK47 image after text appears
+        // Step 2: Show AK47 image after text appears (lower position)
     setTimeout(() => {
         const ak47Img = document.createElement('img');
         ak47Img.src = 'ak47.png';
         ak47Img.style.position = 'absolute';
         ak47Img.style.left = window.innerWidth > 600 ? '50px' : '20px';
-        ak47Img.style.top = '50%';
+        ak47Img.style.top = '70%'; // Lower position to avoid text
         ak47Img.style.transform = 'translateY(-50%)';
         ak47Img.style.width = window.innerWidth > 600 ? '300px' : '150px';
         ak47Img.style.height = 'auto';
@@ -709,28 +721,29 @@ function handleAK47Sequence(noBtn) {
         ak47Img.style.opacity = '0';
         ak47Img.style.transition = 'opacity 0.5s ease-in';
         ak47Img.style.maxWidth = '100%';
+        ak47Img.id = 'ak47-img'; // Add ID for recoil effect
         questionContainer.appendChild(ak47Img);
         
         setTimeout(() => {
             ak47Img.style.opacity = '1';
         }, 100);
         
-        // Step 3: Shoot 4 bullets
+        // Step 3: Shoot 4 bullets (bleeding starts during shooting)
         setTimeout(() => {
+            // Start bleeding effect during shooting
+            addBleedingEffect(noBtn, () => {
+                // After bleeding, break button into pieces
+                breakButtonIntoPieces(noBtn, () => {
+                    // Remove text and AK47 after button falls
+                    setTimeout(() => {
+                        textElement.remove();
+                        ak47Img.remove();
+                    }, 500);
+                });
+            });
+            // Shoot bullets (faster, with recoil)
             shootBullets(ak47Img, noBtn, () => {
-                // Step 4: After all bullets, add bleeding effect
-                setTimeout(() => {
-                    addBleedingEffect(noBtn, () => {
-                        // Step 5: Break button into pieces and make it fall
-                        breakButtonIntoPieces(noBtn, () => {
-                            // Step 6: Remove text and AK47 after button falls
-                            setTimeout(() => {
-                                textElement.remove();
-                                ak47Img.remove();
-                            }, 500);
-                        });
-                    });
-                }, 500);
+                // Callback after all bullets are shot
             });
         }, 1000);
     }, 500);
@@ -782,11 +795,21 @@ function shootBullets(ak47Img, targetBtn, callback) {
         bullet.style.pointerEvents = 'none';
         questionContainer.appendChild(bullet);
         
-        // Animate bullet to target
+        // Add recoil effect to AK47
+        const ak47Img = document.getElementById('ak47-img');
+        if (ak47Img) {
+            ak47Img.style.transition = 'transform 0.1s ease-out';
+            ak47Img.style.transform = 'translateY(-50%) translateX(-5px) rotate(-2deg)';
+            setTimeout(() => {
+                ak47Img.style.transform = 'translateY(-50%)';
+            }, 100);
+        }
+        
+        // Animate bullet to target (faster)
         setTimeout(() => {
             const dx = targetX - ak47X;
             const dy = targetY - ak47Y;
-            bullet.style.transition = 'all 0.2s linear';
+            bullet.style.transition = 'all 0.1s linear'; // Faster bullets
             bullet.style.transform = `translate(${dx}px, ${dy}px)`;
         }, 10);
         
@@ -810,11 +833,11 @@ function shootBullets(ak47Img, targetBtn, callback) {
             
             bulletsShot++;
             
-            // Shoot next bullet
+            // Shoot next bullet (faster interval)
             setTimeout(() => {
                 shootSingleBullet();
-            }, 300);
-        }, 220);
+            }, 200); // Faster shooting
+        }, 120); // Faster bullet travel time
     }
     
     shootSingleBullet();

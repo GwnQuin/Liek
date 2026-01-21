@@ -1080,7 +1080,7 @@ function shootBullets(ak47Img, targetBtn, callback) {
     
     function shootSingleBullet() {
         if (bulletsShot >= totalBullets) {
-            if (callback) callback();
+            if (callback) callback(bulletHolesContainer); // Pass bullet holes container to callback so it can persist
             return;
         }
         
@@ -1360,7 +1360,7 @@ function shootBulletsInitial(ak47Img, targetBtn, container, callback) {
     
     function shootSingleBullet() {
         if (bulletsShot >= totalBullets) {
-            if (callback) callback();
+            if (callback) callback(bulletHolesContainer); // Pass bullet holes container to callback so it can persist
             return;
         }
         

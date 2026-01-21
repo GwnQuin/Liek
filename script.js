@@ -1,6 +1,6 @@
 // Initial button section
 const yesBtn = document.getElementById('yes-btn');
-const noBtn = document.getElementById('no-btn');
+let noBtn = document.getElementById('no-btn');
 const initialSection = document.getElementById('initial-section');
 const quizSection = document.getElementById('quiz-section');
 const angerMessage = document.getElementById('no-anger');
@@ -17,11 +17,6 @@ const angryMessages = [
     "LAAT ME MET RUST! 😡😡😡",
     "IK ZEG NEE! PUNT UIT! 😤💢"
 ];
-
-// Make the No button move away when hovered or clicked
-noBtn.addEventListener('mouseenter', () => {
-    moveButtonAway(noBtn);
-});
 
 // Remove any existing click listeners and add new one with capture phase
 const noBtnClickHandler = function(e) {
@@ -78,7 +73,15 @@ if (noBtn) {
     noBtn.parentNode.replaceChild(newNoBtn, noBtn);
     // Update reference
     noBtn = newNoBtn;
-    // Add new listener with capture phase
+    
+    // Add mouseenter listener
+    noBtn.addEventListener('mouseenter', () => {
+        if (initialNoButtonClickCount === 0) {
+            moveButtonAway(noBtn);
+        }
+    });
+    
+    // Add click listener with capture phase (runs first, before bubbling)
     noBtn.addEventListener('click', noBtnClickHandler, true);
 }
 

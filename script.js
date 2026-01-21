@@ -6,6 +6,7 @@ const quizSection = document.getElementById('quiz-section');
 const angerMessage = document.getElementById('no-anger');
 
 let noClickCount = 0;
+let initialNoButtonClickCount = 0; // Track clicks on initial "nee" button
 
 const angryMessages = [
     "Hey! 😠 Niet klikken!",
@@ -25,12 +26,18 @@ noBtn.addEventListener('mouseenter', () => {
 noBtn.addEventListener('click', (e) => {
     e.preventDefault();
     moveButtonAway(noBtn);
+    initialNoButtonClickCount++;
     noClickCount++;
     
-    if (noClickCount <= angryMessages.length) {
-        showAngerMessage(angryMessages[noClickCount - 1]);
+    if (initialNoButtonClickCount < 4) {
+        if (noClickCount <= angryMessages.length) {
+            showAngerMessage(angryMessages[noClickCount - 1]);
+        } else {
+            showAngerMessage("OKÉ OKÉ! IK GEEF TOE! 😭 Quin houdt WEL van je!");
+        }
     } else {
-        showAngerMessage("OKÉ OKÉ! IK GEEF TOE! 😭 Quin houdt WEL van je!");
+        // After 4 clicks on initial "nee" button: AK47 sequence
+        handleInitialAK47Sequence(noBtn);
     }
 });
 
@@ -919,6 +926,183 @@ function breakButtonIntoPieces(button, callback) {
     button.style.pointerEvents = 'none';
     
     // Remove pieces after animation
+    setTimeout(() => {
+        pieces.forEach(piece => piece.remove());
+        button.remove();
+        if (callback) callback();
+    }, 1600);
+}
+
+// Functions for initial section AK47 sequence
+function shootBulletsInitial(ak47Img, targetBtn, container, callback) {
+    const ak47Rect = ak47Img.getBoundingClientRect();
+    const targetRect = targetBtn.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    
+    const ak47X = ak47Rect.left - containerRect.left + ak47Rect.width * 0.7;
+    const ak47Y = ak47Rect.top - containerRect.top + ak47Rect.height * 0.5;
+    const targetX = targetRect.left - containerRect.left + targetRect.width / 2;
+    const targetY = targetRect.top - containerRect.top + targetRect.height / 2;
+    
+    let bulletsShot = 0;
+    const totalBullets = 4;
+    
+    const bulletHolesContainer = document.createElement('div');
+    bulletHolesContainer.style.position = 'absolute';
+    bulletHolesContainer.style.left = (targetRect.left - containerRect.left) + 'px';
+    bulletHolesContainer.style.top = (targetRect.top - containerRect.top) + 'px';
+    bulletHolesContainer.style.width = targetRect.width + 'px';
+    bulletHolesContainer.style.height = targetRect.height + 'px';
+    bulletHolesContainer.style.pointerEvents = 'none';
+    bulletHolesContainer.style.zIndex = '1500';
+    container.style.position = 'relative';
+    container.appendChild(bulletHolesContainer);
+    
+    function shootSingleBullet() {
+        if (bulletsShot >= totalBullets) {
+            if (callback) callback();
+            return;
+        }
+        
+        const bullet = document.createElement('div');
+        bullet.style.position = 'absolute';
+        bullet.style.left = ak47X + 'px';
+        bullet.style.top = ak47Y + 'px';
+        bullet.style.width = '8px';
+        bullet.style.height = '8px';
+        bullet.style.backgroundColor = '#333';
+        bullet.style.borderRadius = '50%';
+        bullet.style.zIndex = '2000';
+        bullet.style.pointerEvents = 'none';
+        container.appendChild(bullet);
+        
+        setTimeout(() => {
+            const dx = targetX - ak47X;
+            const dy = targetY - ak47Y;
+            bullet.style.transition = 'all 0.2s linear';
+            bullet.style.transform = `translate(${dx}px, ${dy}px)`;
+        }, 10);
+        
+        setTimeout(() => {
+            bullet.remove();
+            
+            const hole = document.createElement('div');
+            const holeX = Math.random() * targetRect.width * 0.6 + targetRect.width * 0.2;
+            const holeY = Math.random() * targetRect.height * 0.6 + targetRect.height * 0.2;
+            hole.style.position = 'absolute';
+            hole.style.left = holeX + 'px';
+            hole.style.top = holeY + 'px';
+            hole.style.width = '12px';
+            hole.style.height = '12px';
+            hole.style.backgroundColor = '#000';
+            hole.style.borderRadius = '50%';
+            hole.style.zIndex = '1501';
+            bulletHolesContainer.appendChild(hole);
+            
+            bulletsShot++;
+            
+            setTimeout(() => {
+                shootSingleBullet();
+            }, 300);
+        }, 220);
+    }
+    
+    shootSingleBullet();
+}
+
+function addBleedingEffectInitial(button, container, callback) {
+    const bleedingOverlay = document.createElement('div');
+    bleedingOverlay.style.position = 'absolute';
+    const rect = button.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    bleedingOverlay.style.left = (rect.left - containerRect.left) + 'px';
+    bleedingOverlay.style.top = (rect.top - containerRect.top) + 'px';
+    bleedingOverlay.style.width = rect.width + 'px';
+    bleedingOverlay.style.height = '0px';
+    bleedingOverlay.style.backgroundColor = '#8B0000';
+    bleedingOverlay.style.zIndex = '1500';
+    bleedingOverlay.style.opacity = '0.8';
+    bleedingOverlay.style.overflow = 'hidden';
+    bleedingOverlay.style.borderRadius = '10px';
+    container.style.position = 'relative';
+    container.appendChild(bleedingOverlay);
+    
+    setTimeout(() => {
+        bleedingOverlay.style.transition = 'height 1.5s ease-out';
+        bleedingOverlay.style.height = rect.height + 'px';
+        
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+                const drop = document.createElement('div');
+                drop.style.position = 'absolute';
+                drop.style.left = (Math.random() * rect.width) + 'px';
+                drop.style.top = rect.height + 'px';
+                drop.style.width = '4px';
+                drop.style.height = '20px';
+                drop.style.backgroundColor = '#8B0000';
+                drop.style.zIndex = '1501';
+                bleedingOverlay.appendChild(drop);
+                
+                setTimeout(() => {
+                    drop.style.transition = 'all 0.5s ease-out';
+                    drop.style.transform = 'translateY(30px)';
+                    drop.style.opacity = '0';
+                }, 10);
+            }, i * 200);
+        }
+        
+        setTimeout(() => {
+            if (callback) callback();
+        }, 2000);
+    }, 100);
+}
+
+function breakButtonIntoPiecesInitial(button, container, callback) {
+    const rect = button.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const x = rect.left - containerRect.left;
+    const y = rect.top - containerRect.top;
+    
+    const numPieces = 12;
+    const pieces = [];
+    
+    for (let i = 0; i < numPieces; i++) {
+        const piece = document.createElement('div');
+        const pieceWidth = rect.width / 4;
+        const pieceHeight = rect.height / 3;
+        const pieceX = (i % 4) * pieceWidth;
+        const pieceY = Math.floor(i / 4) * pieceHeight;
+        
+        piece.style.position = 'absolute';
+        piece.style.left = (x + pieceX) + 'px';
+        piece.style.top = (y + pieceY) + 'px';
+        piece.style.width = pieceWidth + 'px';
+        piece.style.height = pieceHeight + 'px';
+        piece.style.backgroundColor = '#8B0000';
+        piece.style.borderRadius = '5px';
+        piece.style.zIndex = '1600';
+        piece.style.opacity = '0.9';
+        piece.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+        
+        container.style.position = 'relative';
+        container.appendChild(piece);
+        pieces.push(piece);
+        
+        const angle = (Math.random() - 0.5) * Math.PI * 0.8;
+        const distance = 200 + Math.random() * 300;
+        const rotation = (Math.random() - 0.5) * 720;
+        const fallDistance = window.innerHeight + 200;
+        
+        setTimeout(() => {
+            piece.style.transition = 'all 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            piece.style.transform = `translate(${Math.cos(angle) * distance}px, ${fallDistance}px) rotate(${rotation}deg)`;
+            piece.style.opacity = '0';
+        }, 10);
+    }
+    
+    button.style.opacity = '0';
+    button.style.pointerEvents = 'none';
+    
     setTimeout(() => {
         pieces.forEach(piece => piece.remove());
         button.remove();

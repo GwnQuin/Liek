@@ -1445,33 +1445,33 @@ function addBleedingEffectInitial(button, container, callback) {
     
     // Create dripping blood effect - multiple drops that fall down from top
     setTimeout(() => {
-        // Create multiple blood drops that drip down from the top
-        for (let i = 0; i < 15; i++) {
+        // Create multiple blood drops that drip down from the top of the button
+        for (let i = 0; i < 20; i++) {
             setTimeout(() => {
                 const drop = document.createElement('div');
                 const dropX = Math.random() * rect.width;
-                const dropWidth = 3 + Math.random() * 4; // Variable width
-                const dropHeight = 15 + Math.random() * 25; // Variable height
+                const dropWidth = 4 + Math.random() * 5; // Variable width (slightly larger)
+                const dropHeight = 20 + Math.random() * 30; // Variable height (slightly larger)
                 drop.style.position = 'absolute';
                 drop.style.left = dropX + 'px';
-                drop.style.top = '0px'; // Start from top of button
+                drop.style.top = '-5px'; // Start slightly above the button top for better visibility
                 drop.style.width = dropWidth + 'px';
                 drop.style.height = dropHeight + 'px';
                 drop.style.backgroundColor = '#8B0000';
                 drop.style.borderRadius = '50% 50% 50% 50% / 60% 60% 40% 40%'; // Teardrop shape
                 drop.style.zIndex = '1501';
-                drop.style.opacity = '0.9';
-                drop.style.boxShadow = '0 0 3px rgba(139, 0, 0, 0.5)';
+                drop.style.opacity = '1'; // Fully opaque for better visibility
+                drop.style.boxShadow = '0 0 5px rgba(139, 0, 0, 0.8)';
                 bleedingOverlay.appendChild(drop);
                 
                 // Animate drop falling down from top to bottom
                 setTimeout(() => {
-                    const fallDistance = rect.height + 50 + Math.random() * 100; // Fall past the button
-                    drop.style.transition = 'all 0.8s ease-in';
+                    const fallDistance = rect.height + 80 + Math.random() * 120; // Fall well past the button
+                    drop.style.transition = 'all 1.2s ease-in';
                     drop.style.transform = `translateY(${fallDistance}px)`;
                     drop.style.opacity = '0';
-                }, 10);
-            }, i * 150); // Stagger drops
+                }, 50); // Slight delay to ensure drop is visible before falling
+            }, i * 120); // Stagger drops more frequently
         }
         
         // Create additional blood streaks that flow down the button

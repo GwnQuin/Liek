@@ -1443,9 +1443,9 @@ function addBleedingEffectInitial(button, container, callback) {
     container.style.position = 'relative';
     container.appendChild(bleedingOverlay);
     
-    // Create dripping blood effect - multiple drops that fall down
+    // Create dripping blood effect - multiple drops that fall down from top
     setTimeout(() => {
-        // Create multiple blood drops that drip down
+        // Create multiple blood drops that drip down from the top
         for (let i = 0; i < 15; i++) {
             setTimeout(() => {
                 const drop = document.createElement('div');
@@ -1454,7 +1454,7 @@ function addBleedingEffectInitial(button, container, callback) {
                 const dropHeight = 15 + Math.random() * 25; // Variable height
                 drop.style.position = 'absolute';
                 drop.style.left = dropX + 'px';
-                drop.style.top = rect.height + 'px';
+                drop.style.top = '0px'; // Start from top of button
                 drop.style.width = dropWidth + 'px';
                 drop.style.height = dropHeight + 'px';
                 drop.style.backgroundColor = '#8B0000';
@@ -1464,9 +1464,9 @@ function addBleedingEffectInitial(button, container, callback) {
                 drop.style.boxShadow = '0 0 3px rgba(139, 0, 0, 0.5)';
                 bleedingOverlay.appendChild(drop);
                 
-                // Animate drop falling down
+                // Animate drop falling down from top to bottom
                 setTimeout(() => {
-                    const fallDistance = 50 + Math.random() * 100;
+                    const fallDistance = rect.height + 50 + Math.random() * 100; // Fall past the button
                     drop.style.transition = 'all 0.8s ease-in';
                     drop.style.transform = `translateY(${fallDistance}px)`;
                     drop.style.opacity = '0';

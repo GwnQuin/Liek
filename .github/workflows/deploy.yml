@@ -18,6 +18,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: false  # Disabled - using Netlify for deployment
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

@@ -296,12 +296,55 @@ function renderQuestion() {
     
     // Add aggressive movement to "nee" button for "Is zij knap?" question
     if (question.question === "Is zij knap?") {
-        const noBtn = document.getElementById('answer-btn-1');
-        if (noBtn) {
-            // Make button move aggressively
-            makeButtonMoveAggressively(noBtn);
-        }
+        setTimeout(() => {
+            const noBtn = document.getElementById('answer-btn-1');
+            if (noBtn) {
+                // Initial positioning - make sure it's not on top of Yes button
+                positionButtonAwayFromYes(noBtn);
+                // Make button move aggressively
+                makeButtonMoveAggressively(noBtn);
+            }
+        }, 100);
     }
+}
+
+function positionButtonAwayFromYes(noBtn) {
+    const container = noBtn.parentElement;
+    const containerRect = container.getBoundingClientRect();
+    const yesBtn = document.getElementById('answer-btn-0');
+    const buttonRect = noBtn.getBoundingClientRect();
+    
+    if (!yesBtn) return;
+    
+    const yesRect = yesBtn.getBoundingClientRect();
+    const yesCenterX = yesRect.left - containerRect.left + yesRect.width / 2;
+    const yesCenterY = yesRect.top - containerRect.top + yesRect.height / 2;
+    
+    // Find a position away from Yes button
+    let attempts = 0;
+    let newX, newY;
+    
+    do {
+        const maxX = Math.max(0, containerRect.width - buttonRect.width - 20);
+        const maxY = Math.max(0, containerRect.height - buttonRect.height - 20);
+        
+        newX = Math.max(0, Math.random() * maxX);
+        newY = Math.max(0, Math.random() * maxY);
+        
+        const newCenterX = newX + buttonRect.width / 2;
+        const newCenterY = newY + buttonRect.height / 2;
+        const distance = Math.sqrt(
+            Math.pow(newCenterX - yesCenterX, 2) + 
+            Math.pow(newCenterY - yesCenterY, 2)
+        );
+        
+        if (distance >= 200) break; // At least 200px away
+        attempts++;
+    } while (attempts < 100);
+    
+    noBtn.style.position = 'absolute';
+    noBtn.style.left = newX + 'px';
+    noBtn.style.top = newY + 'px';
 }
 
 function makeButtonMoveAggressively(button) {
@@ -325,7 +368,7 @@ function makeButtonMoveAggressively(button) {
         newX = Math.max(0, Math.random() * maxX);
         newY = Math.max(0, Math.random() * maxY);
         
-        // Check collision with Yes button
+        // Check collision with Yes button - must be at least 180px away
         let collision = false;
         if (yesBtn) {
             const yesRect = yesBtn.getBoundingClientRect();
@@ -337,14 +380,14 @@ function makeButtonMoveAggressively(button) {
                 Math.pow(newCenterX - yesCenterX, 2) + 
                 Math.pow(newCenterY - yesCenterY, 2)
             );
-            if (distance < 150) collision = true;
+            if (distance < 180) collision = true;
         }
         
         // Check collision with question text
         if (questionElement && !collision) {
             const questionRect = questionElement.getBoundingClientRect();
             const questionBottom = questionRect.bottom - containerRect.top;
-            if (newY < questionBottom + 10) collision = true;
+            if (newY < questionBottom + 15) collision = true;
         }
         
         // Check collision with image
@@ -374,7 +417,7 @@ function makeButtonMoveAggressively(button) {
     button.style.position = 'absolute';
     button.style.left = newX + 'px';
     button.style.top = newY + 'px';
-    button.style.transition = 'all 0.15s ease-out'; // Faster, more aggressive movement
+    button.style.transition = 'all 0.12s ease-out'; // Faster, more aggressive movement
     
     // Store onclick handler before cloning
     const onclickAttr = button.getAttribute('onclick');
@@ -388,26 +431,28 @@ function makeButtonMoveAggressively(button) {
     
     // Add continuous movement on hover/touch
     const moveHandler = () => {
-        setTimeout(() => makeButtonMoveAggressively(newButton), 50);
+        setTimeout(() => makeButtonMoveAggressively(newButton), 30);
     };
     
     newButton.addEventListener('mouseenter', moveHandler);
     newButton.addEventListener('touchstart', moveHandler);
+    newButton.addEventListener('touchmove', moveHandler);
     
-    // Also move on click attempt (but don't prevent default if it's the actual click)
+    // Also move on click attempt
     newButton.addEventListener('mousedown', (e) => {
-        if (e.button === 0) { // Left click only
-            setTimeout(() => moveHandler(), 10);
+        if (e.button === 0) {
+            setTimeout(() => moveHandler(), 5);
         }
     });
 }
 
 function selectAnswer(action, questionIndex, isCorrect) {
-    // Track wrong answers (but NOT for explode action)
+    // Track wrong answers (but NEVER for explode action, regardless of isCorrect value)
     if (!isCorrect && action !== "explode" && questionIndex < quizQuestions.length) {
         const question = quizQuestions[questionIndex];
         wrongAnswers.push(question.question);
     }
+    // For explode action, never track as wrong answer
     switch(action) {
         case "instantFail":
             hasFailed = true;
@@ -467,15 +512,15 @@ function selectAnswer(action, questionIndex, isCorrect) {
                 noBtn.style.pointerEvents = 'none';
                 
                 if (noButtonClickCount < 4) {
-                    // Simple explosion animation for first 3 clicks
+                    // Explosion animation with pieces breaking and raining for first 3 clicks
                     explodeButtonSimple(noBtn);
                     // Re-enable after animation
                     setTimeout(() => {
                         noBtn.style.pointerEvents = 'auto';
                         // Re-attach click handler
-                        noBtn.setAttribute('onclick', `selectAnswer('explode', ${questionIndex}, false)`);
+                        noBtn.setAttribute('onclick', `selectAnswer('explode', ${questionIndex}, true)`);
                         makeButtonMoveAggressively(noBtn);
-                    }, 600);
+                    }, 1300);
                 } else {
                     // After 4 clicks: full sequence with AK47
                     handleAK47Sequence(noBtn);
@@ -492,50 +537,64 @@ function selectAnswer(action, questionIndex, isCorrect) {
 function explodeButtonSimple(button) {
     const container = button.parentElement;
     const rect = button.getBoundingClientRect();
-                const containerRect = container.getBoundingClientRect();
-                const x = rect.left - containerRect.left + rect.width / 2;
-                const y = rect.top - containerRect.top + rect.height / 2;
-                
-                // Create explosion particles
-                for (let i = 0; i < 8; i++) {
-                    const particle = document.createElement('div');
-                    particle.style.position = 'absolute';
-                    particle.style.left = x + 'px';
-                    particle.style.top = y + 'px';
-                    particle.style.width = '10px';
-                    particle.style.height = '10px';
-                    particle.style.backgroundColor = '#f5576c';
-                    particle.style.borderRadius = '50%';
-                    particle.style.pointerEvents = 'none';
-                    particle.style.zIndex = '1000';
-                    
-                    const angle = (i / 8) * Math.PI * 2;
-                    const distance = 100;
-                    
-                    container.style.position = 'relative';
-                    container.appendChild(particle);
-                    
-                    setTimeout(() => {
-                        particle.style.transition = 'all 0.5s ease-out';
-                        particle.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
-                        particle.style.opacity = '0';
-                    }, 10);
-                    
-                    setTimeout(() => {
-                        particle.remove();
-                    }, 600);
-                }
-                
-    // Button animation
-    button.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
-    button.style.transform = 'scale(3) rotate(720deg)';
-    button.style.opacity = '0';
+    const containerRect = container.getBoundingClientRect();
+    const x = rect.left - containerRect.left;
+    const y = rect.top - containerRect.top;
     
+    // Break button into pieces that explode and rain down
+    const numPieces = 15;
+    const pieces = [];
+    
+    for (let i = 0; i < numPieces; i++) {
+        const piece = document.createElement('div');
+        const pieceWidth = rect.width / 5;
+        const pieceHeight = rect.height / 3;
+        const pieceX = (i % 5) * pieceWidth;
+        const pieceY = Math.floor(i / 5) * pieceHeight;
+        
+        // Get button's computed style to preserve appearance
+        const computedStyle = window.getComputedStyle(button);
+        
+        piece.style.position = 'absolute';
+        piece.style.left = (x + pieceX) + 'px';
+        piece.style.top = (y + pieceY) + 'px';
+        piece.style.width = pieceWidth + 'px';
+        piece.style.height = pieceHeight + 'px';
+        piece.style.backgroundColor = computedStyle.backgroundColor;
+        piece.style.border = computedStyle.border;
+        piece.style.borderRadius = '5px';
+        piece.style.zIndex = '1600';
+        piece.style.opacity = '0.9';
+        piece.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+        piece.style.overflow = 'hidden';
+        
+        container.style.position = 'relative';
+        container.appendChild(piece);
+        pieces.push(piece);
+        
+        // Animate piece flying out and raining down
+        const angle = (Math.random() - 0.5) * Math.PI * 0.6; // Less horizontal spread
+        const horizontalDistance = (Math.random() - 0.5) * 150;
+        const verticalDistance = window.innerHeight + 300; // Fall down
+        const rotation = (Math.random() - 0.5) * 360;
+        
+        setTimeout(() => {
+            piece.style.transition = 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)';
+            piece.style.transform = `translate(${horizontalDistance}px, ${verticalDistance}px) rotate(${rotation}deg)`;
+            piece.style.opacity = '0';
+        }, 10);
+    }
+    
+    // Hide original button temporarily
+    button.style.opacity = '0';
+    button.style.pointerEvents = 'none';
+    
+    // Remove pieces after animation and restore button
     setTimeout(() => {
-        button.style.transition = '';
-        button.style.transform = '';
+        pieces.forEach(piece => piece.remove());
         button.style.opacity = '1';
-    }, 600);
+        button.style.pointerEvents = 'auto';
+    }, 1300);
 }
 
 function handleAK47Sequence(noBtn) {
@@ -607,11 +666,12 @@ function handleAK47Sequence(noBtn) {
 }
 
 function shootBullets(ak47Img, targetBtn, callback) {
+    const questionContainer = document.getElementById('question-container');
     const ak47Rect = ak47Img.getBoundingClientRect();
     const targetRect = targetBtn.getBoundingClientRect();
-    const container = targetBtn.parentElement;
-    const containerRect = container.getBoundingClientRect();
+    const containerRect = questionContainer.getBoundingClientRect();
     
+    // Calculate positions relative to question container
     const ak47X = ak47Rect.left - containerRect.left + ak47Rect.width * 0.7;
     const ak47Y = ak47Rect.top - containerRect.top + ak47Rect.height * 0.5;
     const targetX = targetRect.left - containerRect.left + targetRect.width / 2;
@@ -623,14 +683,14 @@ function shootBullets(ak47Img, targetBtn, callback) {
     // Create bullet holes container
     const bulletHolesContainer = document.createElement('div');
     bulletHolesContainer.style.position = 'absolute';
-    bulletHolesContainer.style.left = targetRect.left - containerRect.left + 'px';
-    bulletHolesContainer.style.top = targetRect.top - containerRect.top + 'px';
+    bulletHolesContainer.style.left = (targetRect.left - containerRect.left) + 'px';
+    bulletHolesContainer.style.top = (targetRect.top - containerRect.top) + 'px';
     bulletHolesContainer.style.width = targetRect.width + 'px';
     bulletHolesContainer.style.height = targetRect.height + 'px';
     bulletHolesContainer.style.pointerEvents = 'none';
     bulletHolesContainer.style.zIndex = '1500';
-    container.style.position = 'relative';
-    container.appendChild(bulletHolesContainer);
+    questionContainer.style.position = 'relative';
+    questionContainer.appendChild(bulletHolesContainer);
     
     function shootSingleBullet() {
         if (bulletsShot >= totalBullets) {
@@ -649,7 +709,7 @@ function shootBullets(ak47Img, targetBtn, callback) {
         bullet.style.borderRadius = '50%';
         bullet.style.zIndex = '2000';
         bullet.style.pointerEvents = 'none';
-        container.appendChild(bullet);
+        questionContainer.appendChild(bullet);
         
         // Animate bullet to target
         setTimeout(() => {
@@ -691,13 +751,13 @@ function shootBullets(ak47Img, targetBtn, callback) {
 
 function addBleedingEffect(button, callback) {
     // Create bleeding overlay
+    const questionContainer = document.getElementById('question-container');
     const bleedingOverlay = document.createElement('div');
     bleedingOverlay.style.position = 'absolute';
     const rect = button.getBoundingClientRect();
-    const container = button.parentElement;
-    const containerRect = container.getBoundingClientRect();
-    bleedingOverlay.style.left = rect.left - containerRect.left + 'px';
-    bleedingOverlay.style.top = rect.top - containerRect.top + 'px';
+    const containerRect = questionContainer.getBoundingClientRect();
+    bleedingOverlay.style.left = (rect.left - containerRect.left) + 'px';
+    bleedingOverlay.style.top = (rect.top - containerRect.top) + 'px';
     bleedingOverlay.style.width = rect.width + 'px';
     bleedingOverlay.style.height = '0px';
     bleedingOverlay.style.backgroundColor = '#8B0000';
@@ -705,8 +765,8 @@ function addBleedingEffect(button, callback) {
     bleedingOverlay.style.opacity = '0.8';
     bleedingOverlay.style.overflow = 'hidden';
     bleedingOverlay.style.borderRadius = '10px';
-    container.style.position = 'relative';
-    container.appendChild(bleedingOverlay);
+    questionContainer.style.position = 'relative';
+    questionContainer.appendChild(bleedingOverlay);
     
     // Animate blood flowing down
     setTimeout(() => {
@@ -741,9 +801,9 @@ function addBleedingEffect(button, callback) {
 }
 
 function breakButtonIntoPieces(button, callback) {
+    const questionContainer = document.getElementById('question-container');
     const rect = button.getBoundingClientRect();
-    const container = button.parentElement;
-    const containerRect = container.getBoundingClientRect();
+    const containerRect = questionContainer.getBoundingClientRect();
     const x = rect.left - containerRect.left;
     const y = rect.top - containerRect.top;
     
@@ -769,8 +829,8 @@ function breakButtonIntoPieces(button, callback) {
         piece.style.opacity = '0.9';
         piece.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
         
-        container.style.position = 'relative';
-        container.appendChild(piece);
+        questionContainer.style.position = 'relative';
+        questionContainer.appendChild(piece);
         pieces.push(piece);
         
         // Animate piece flying out

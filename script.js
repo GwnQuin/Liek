@@ -134,12 +134,24 @@ const noBtnClickHandler = function(e) {
         
         // Wait for button to actually move (after transition), then activate yes button
         window.__quizStartTimeout = setTimeout(() => {
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:136',message:'setTimeout callback ENTRY (1s delay)',data:{isProcessingNoButton,__blockNavigation:window.__blockNavigation},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
+            
             // Reset flags FIRST
             isProcessingNoButton = false;
             window.__blockNavigation = false;
             
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:139',message:'Flags RESET in setTimeout',data:{isProcessingNoButton,__blockNavigation:window.__blockNavigation},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
+            
             // Small delay to ensure flags are reset before starting quiz
             setTimeout(() => {
+                // #region agent log
+                fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:142',message:'Nested setTimeout callback (50ms delay)',data:{isProcessingNoButton,__blockNavigation:window.__blockNavigation},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                // #endregion
+                
                 // Manually trigger the yes button click handler (bypassing event)
                 initialSection.classList.remove('active');
                 initialSection.classList.add('hidden');
@@ -181,6 +193,9 @@ if (noBtn) {
     
     // Add mouseenter listener
     noBtn.addEventListener('mouseenter', () => {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:195',message:'mouseenter event',data:{initialNoButtonClickCount,isProcessingNoButton},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'F'})}).catch(()=>{});
+        // #endregion
         if (initialNoButtonClickCount === 0 && !isProcessingNoButton) {
             moveButtonAway(noBtn);
         }

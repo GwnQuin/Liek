@@ -33,13 +33,14 @@ const noBtnClickHandler = function(e) {
     if (initialNoButtonClickCount === 0) {
         // Disable button immediately to prevent any further clicks
         noBtn.style.pointerEvents = 'none';
+        noBtn.disabled = true;
         
-        // Move button away first
+        // Move button away first (synchronous, no delay)
         moveButtonAway(noBtn);
         initialNoButtonClickCount++;
         noClickCount++;
         
-        // After button moves away (1 second delay), activate yes button
+        // Wait for button to actually move (after transition), then activate yes button
         setTimeout(() => {
             // Manually trigger the yes button click handler
             initialSection.classList.remove('active');
@@ -47,7 +48,7 @@ const noBtnClickHandler = function(e) {
             quizSection.classList.remove('hidden');
             quizSection.classList.add('active');
             startQuiz();
-        }, 1000); // 1 second delay
+        }, 1000); // 1 second delay after button starts moving
         
         return false;
     }
@@ -70,9 +71,16 @@ const noBtnClickHandler = function(e) {
     return false;
 };
 
-// Remove old listener and add new one with capture phase (runs first)
-noBtn.removeEventListener('click', noBtnClickHandler);
-noBtn.addEventListener('click', noBtnClickHandler, true); // Use capture phase
+// Remove old listeners and add new one with capture phase (runs first, before bubbling)
+if (noBtn) {
+    // Clone and replace to remove all event listeners
+    const newNoBtn = noBtn.cloneNode(true);
+    noBtn.parentNode.replaceChild(newNoBtn, noBtn);
+    // Update reference
+    noBtn = newNoBtn;
+    // Add new listener with capture phase
+    noBtn.addEventListener('click', noBtnClickHandler, true);
+}
 
 function moveButtonAway(button) {
     const container = button.parentElement;

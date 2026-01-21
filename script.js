@@ -26,6 +26,7 @@ noBtn.addEventListener('mouseenter', () => {
 noBtn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation(); // Prevent any other handlers
     
     // First click: make button run away, then activate yes button
     if (initialNoButtonClickCount === 0) {
@@ -33,11 +34,16 @@ noBtn.addEventListener('click', (e) => {
         initialNoButtonClickCount++;
         noClickCount++;
         
-        // After button moves away, activate yes button
+        // After button moves away (1 second delay), activate yes button
         setTimeout(() => {
-            yesBtn.click();
-        }, 500);
-        return;
+            // Manually trigger the yes button click handler
+            initialSection.classList.remove('active');
+            initialSection.classList.add('hidden');
+            quizSection.classList.remove('hidden');
+            quizSection.classList.add('active');
+            startQuiz();
+        }, 1000); // 1 second delay
+        return false; // Prevent default and stop propagation
     }
     
     moveButtonAway(noBtn);
@@ -54,6 +60,8 @@ noBtn.addEventListener('click', (e) => {
         // After 4 clicks on initial "nee" button: AK47 sequence
         handleInitialAK47Sequence(noBtn);
     }
+    
+    return false; // Always prevent default
 });
 
 function moveButtonAway(button) {

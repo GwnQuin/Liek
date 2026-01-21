@@ -981,13 +981,13 @@ function handleInitialAK47Sequence(noBtn) {
         textElement.style.opacity = '1';
     }, 100);
     
-    // Step 2: Show AK47 image after text appears
+    // Step 2: Show AK47 image after text appears (lower position)
     setTimeout(() => {
         const ak47Img = document.createElement('img');
         ak47Img.src = 'ak47.png';
         ak47Img.style.position = 'absolute';
         ak47Img.style.left = window.innerWidth > 600 ? '50px' : '20px';
-        ak47Img.style.top = '50%';
+        ak47Img.style.top = '70%'; // Lower position to avoid text
         ak47Img.style.transform = 'translateY(-50%)';
         ak47Img.style.width = window.innerWidth > 600 ? '300px' : '150px';
         ak47Img.style.height = 'auto';
@@ -995,28 +995,29 @@ function handleInitialAK47Sequence(noBtn) {
         ak47Img.style.opacity = '0';
         ak47Img.style.transition = 'opacity 0.5s ease-in';
         ak47Img.style.maxWidth = '100%';
+        ak47Img.id = 'ak47-img-initial'; // Add ID for recoil effect
         content.appendChild(ak47Img);
         
         setTimeout(() => {
             ak47Img.style.opacity = '1';
         }, 100);
         
-        // Step 3: Shoot 4 bullets
+        // Step 3: Shoot 4 bullets (bleeding starts during shooting)
         setTimeout(() => {
+            // Start bleeding effect during shooting
+            addBleedingEffectInitial(noBtn, content, () => {
+                // After bleeding, break button into pieces
+                breakButtonIntoPiecesInitial(noBtn, content, () => {
+                    // Remove text and AK47 after button falls
+                    setTimeout(() => {
+                        textElement.remove();
+                        ak47Img.remove();
+                    }, 500);
+                });
+            });
+            // Shoot bullets (faster, with recoil)
             shootBulletsInitial(ak47Img, noBtn, content, () => {
-                // Step 4: After all bullets, add bleeding effect
-                setTimeout(() => {
-                    addBleedingEffectInitial(noBtn, content, () => {
-                        // Step 5: Break button into pieces and make it fall
-                        breakButtonIntoPiecesInitial(noBtn, content, () => {
-                            // Step 6: Remove text and AK47 after button falls
-                            setTimeout(() => {
-                                textElement.remove();
-                                ak47Img.remove();
-                            }, 500);
-                        });
-                    });
-                }, 500);
+                // Callback after all bullets are shot
             });
         }, 1000);
     }, 500);

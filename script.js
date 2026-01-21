@@ -35,8 +35,11 @@ const noBtnClickHandler = function(e) {
     
     // First click: make button run away, then activate yes button
     if (initialNoButtonClickCount === 0) {
-        // Set flag to prevent any other handlers
+        // Set flag FIRST to prevent any other handlers immediately
         isProcessingNoButton = true;
+        
+        // Also set a global flag on window to catch any other scripts
+        window.__blockNavigation = true;
         
         // Disable button immediately to prevent any further clicks
         noBtn.style.pointerEvents = 'none';
@@ -90,8 +93,9 @@ const noBtnClickHandler = function(e) {
         
         // Wait for button to actually move (after transition), then activate yes button
         setTimeout(() => {
-            // Reset flag
+            // Reset flags
             isProcessingNoButton = false;
+            window.__blockNavigation = false;
             // Manually trigger the yes button click handler (bypassing event)
             initialSection.classList.remove('active');
             initialSection.classList.add('hidden');
@@ -141,9 +145,10 @@ if (noBtn) {
     
     // Also add document-level blocker to prevent any navigation during processing
     document.addEventListener('click', function(e) {
-        if (isProcessingNoButton) {
-            // Block all clicks during processing
-            if (e.target === yesBtn || yesBtn.contains(e.target)) {
+        if (isProcessingNoButton || window.__blockNavigation) {
+            // Block all clicks on yes button or container during processing
+            if (e.target === yesBtn || yesBtn.contains(e.target) || 
+                e.target.closest('.button-container') === noBtn.closest('.button-container')) {
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
@@ -270,8 +275,8 @@ function showAngerMessage(message) {
 
 // When Yes button is clicked, show quiz
 yesBtn.addEventListener('click', (e) => {
-    // Block if no button is being processed
-    if (isProcessingNoButton) {
+    // Block if no button is being processed or navigation is blocked
+    if (isProcessingNoButton || window.__blockNavigation) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();

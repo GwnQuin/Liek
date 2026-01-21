@@ -136,12 +136,16 @@ const noBtnClickHandler = function(e) {
         // Reset flags after a delay to allow button to move, but DO NOT start quiz
         setTimeout(() => {
             // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:135',message:'Resetting flags after button move (NO quiz start)',data:{isProcessingNoButton,__blockNavigation:window.__blockNavigation},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'C'})}).catch(()=>{});
+            fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:137',message:'Resetting flags after button move (NO quiz start) - NEW CODE VERSION',data:{isProcessingNoButton,__blockNavigation:window.__blockNavigation,codeVersion:'v2-fixed'},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'C'})}).catch(()=>{});
             // #endregion
             
             // Reset flags but DO NOT start quiz - user must click "ja" manually
             isProcessingNoButton = false;
             window.__blockNavigation = false;
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:145',message:'Flags reset - NO startQuiz() called',data:{isProcessingNoButton,__blockNavigation:window.__blockNavigation},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
         }, 1000); // 1 second delay after button starts moving
         
         return false;

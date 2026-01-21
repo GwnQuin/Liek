@@ -235,6 +235,7 @@ const quizQuestions = [
 
 let currentQuestionIndex = 0;
 let askedMurderQuestion = false;
+let noButtonClickCount = 0; // Track clicks on "nee" button for "Is zij knap?" question
 
 function startQuiz() {
     currentQuestionIndex = 0;
@@ -242,6 +243,7 @@ function startQuiz() {
     hasFailed = false;
     wrongAnswers = [];
     askedMurderQuestion = false;
+    noButtonClickCount = 0;
     renderQuestion();
 }
 
@@ -291,11 +293,118 @@ function renderQuestion() {
             ).join('')}
         </div>
     `;
+    
+    // Add aggressive movement to "nee" button for "Is zij knap?" question
+    if (question.question === "Is zij knap?") {
+        const noBtn = document.getElementById('answer-btn-1');
+        if (noBtn) {
+            // Make button move aggressively
+            makeButtonMoveAggressively(noBtn);
+        }
+    }
+}
+
+function makeButtonMoveAggressively(button) {
+    const container = button.parentElement;
+    const containerRect = container.getBoundingClientRect();
+    const yesBtn = document.getElementById('answer-btn-0');
+    const buttonRect = button.getBoundingClientRect();
+    
+    // Get all other elements to avoid collision
+    const questionElement = document.querySelector('.question');
+    const imageElement = document.querySelector('.answer-options')?.previousElementSibling?.querySelector('img');
+    
+    let attempts = 0;
+    let newX, newY;
+    
+    do {
+        const maxX = Math.max(0, containerRect.width - buttonRect.width - 20);
+        const maxY = Math.max(0, containerRect.height - buttonRect.height - 20);
+        
+        // More aggressive random movement
+        newX = Math.max(0, Math.random() * maxX);
+        newY = Math.max(0, Math.random() * maxY);
+        
+        // Check collision with Yes button
+        let collision = false;
+        if (yesBtn) {
+            const yesRect = yesBtn.getBoundingClientRect();
+            const newCenterX = newX + buttonRect.width / 2;
+            const newCenterY = newY + buttonRect.height / 2;
+            const yesCenterX = yesRect.left - containerRect.left + yesRect.width / 2;
+            const yesCenterY = yesRect.top - containerRect.top + yesRect.height / 2;
+            const distance = Math.sqrt(
+                Math.pow(newCenterX - yesCenterX, 2) + 
+                Math.pow(newCenterY - yesCenterY, 2)
+            );
+            if (distance < 150) collision = true;
+        }
+        
+        // Check collision with question text
+        if (questionElement && !collision) {
+            const questionRect = questionElement.getBoundingClientRect();
+            const questionBottom = questionRect.bottom - containerRect.top;
+            if (newY < questionBottom + 10) collision = true;
+        }
+        
+        // Check collision with image
+        if (imageElement && !collision) {
+            const imageRect = imageElement.getBoundingClientRect();
+            const imgLeft = imageRect.left - containerRect.left;
+            const imgRight = imageRect.right - containerRect.left;
+            const imgTop = imageRect.top - containerRect.top;
+            const imgBottom = imageRect.bottom - containerRect.top;
+            const newRight = newX + buttonRect.width;
+            const newBottom = newY + buttonRect.height;
+            
+            if (!(newRight < imgLeft || newX > imgRight || newBottom < imgTop || newY > imgBottom)) {
+                collision = true;
+            }
+        }
+        
+        // Ensure button stays within container bounds
+        if (newX < 0 || newY < 0 || newX + buttonRect.width > containerRect.width || newY + buttonRect.height > containerRect.height) {
+            collision = true;
+        }
+        
+        if (!collision || attempts > 100) break;
+        attempts++;
+    } while (attempts < 200);
+    
+    button.style.position = 'absolute';
+    button.style.left = newX + 'px';
+    button.style.top = newY + 'px';
+    button.style.transition = 'all 0.15s ease-out'; // Faster, more aggressive movement
+    
+    // Store onclick handler before cloning
+    const onclickAttr = button.getAttribute('onclick');
+    
+    // Remove old event listeners by cloning the button (clean way to remove all listeners)
+    const newButton = button.cloneNode(true);
+    if (onclickAttr) {
+        newButton.setAttribute('onclick', onclickAttr);
+    }
+    button.parentNode.replaceChild(newButton, button);
+    
+    // Add continuous movement on hover/touch
+    const moveHandler = () => {
+        setTimeout(() => makeButtonMoveAggressively(newButton), 50);
+    };
+    
+    newButton.addEventListener('mouseenter', moveHandler);
+    newButton.addEventListener('touchstart', moveHandler);
+    
+    // Also move on click attempt (but don't prevent default if it's the actual click)
+    newButton.addEventListener('mousedown', (e) => {
+        if (e.button === 0) { // Left click only
+            setTimeout(() => moveHandler(), 10);
+        }
+    });
 }
 
 function selectAnswer(action, questionIndex, isCorrect) {
-    // Track wrong answers
-    if (!isCorrect && questionIndex < quizQuestions.length) {
+    // Track wrong answers (but NOT for explode action)
+    if (!isCorrect && action !== "explode" && questionIndex < quizQuestions.length) {
         const question = quizQuestions[questionIndex];
         wrongAnswers.push(question.question);
     }
@@ -351,20 +460,38 @@ function selectAnswer(action, questionIndex, isCorrect) {
             renderQuestion();
             break;
         case "explode":
-            // Explode the button with animation
+            noButtonClickCount++;
             const noBtn = document.getElementById('answer-btn-1');
             if (noBtn) {
-                // Prevent further clicks
+                // Prevent further clicks temporarily
                 noBtn.style.pointerEvents = 'none';
                 
-                // Explosion animation
-                noBtn.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
-                noBtn.style.transform = 'scale(3) rotate(720deg)';
-                noBtn.style.opacity = '0';
-                
-                // Add explosion particles effect
-                const container = noBtn.parentElement;
-                const rect = noBtn.getBoundingClientRect();
+                if (noButtonClickCount < 4) {
+                    // Simple explosion animation for first 3 clicks
+                    explodeButtonSimple(noBtn);
+                    // Re-enable after animation
+                    setTimeout(() => {
+                        noBtn.style.pointerEvents = 'auto';
+                        // Re-attach click handler
+                        noBtn.setAttribute('onclick', `selectAnswer('explode', ${questionIndex}, false)`);
+                        makeButtonMoveAggressively(noBtn);
+                    }, 600);
+                } else {
+                    // After 4 clicks: full sequence with AK47
+                    handleAK47Sequence(noBtn);
+                }
+            }
+            // Don't track as wrong answer and don't go to next question
+            break;
+        default:
+            currentQuestionIndex++;
+            renderQuestion();
+    }
+}
+
+function explodeButtonSimple(button) {
+    const container = button.parentElement;
+    const rect = button.getBoundingClientRect();
                 const containerRect = container.getBoundingClientRect();
                 const x = rect.left - containerRect.left + rect.width / 2;
                 const y = rect.top - containerRect.top + rect.height / 2;
@@ -384,8 +511,6 @@ function selectAnswer(action, questionIndex, isCorrect) {
                     
                     const angle = (i / 8) * Math.PI * 2;
                     const distance = 100;
-                    const endX = x + Math.cos(angle) * distance;
-                    const endY = y + Math.sin(angle) * distance;
                     
                     container.style.position = 'relative';
                     container.appendChild(particle);
@@ -401,24 +526,276 @@ function selectAnswer(action, questionIndex, isCorrect) {
                     }, 600);
                 }
                 
-                // Remove button after animation
+    // Button animation
+    button.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+    button.style.transform = 'scale(3) rotate(720deg)';
+    button.style.opacity = '0';
+    
+    setTimeout(() => {
+        button.style.transition = '';
+        button.style.transform = '';
+        button.style.opacity = '1';
+    }, 600);
+}
+
+function handleAK47Sequence(noBtn) {
+    const questionContainer = document.getElementById('question-container');
+    const container = noBtn.parentElement;
+    const containerRect = container.getBoundingClientRect();
+    const rect = noBtn.getBoundingClientRect();
+    
+    // Step 1: Show text "Okay dan dan doen we het maar zo"
+    const textElement = document.createElement('div');
+    textElement.textContent = 'Okay dan dan doen we het maar zo';
+    textElement.style.position = 'absolute';
+    textElement.style.left = '20px';
+    textElement.style.top = '50%';
+    textElement.style.transform = 'translateY(-50%)';
+    textElement.style.fontSize = window.innerWidth > 600 ? '1.8rem' : '1.3rem';
+    textElement.style.color = '#1a237e';
+    textElement.style.fontWeight = '600';
+    textElement.style.zIndex = '2000';
+    textElement.style.opacity = '0';
+    textElement.style.transition = 'opacity 0.5s ease-in';
+    textElement.style.maxWidth = window.innerWidth > 600 ? 'none' : 'calc(50% - 20px)';
+    questionContainer.style.position = 'relative';
+    questionContainer.appendChild(textElement);
+    
+    setTimeout(() => {
+        textElement.style.opacity = '1';
+    }, 100);
+    
+        // Step 2: Show AK47 image after text appears
+    setTimeout(() => {
+        const ak47Img = document.createElement('img');
+        ak47Img.src = 'ak47.png';
+        ak47Img.style.position = 'absolute';
+        ak47Img.style.right = window.innerWidth > 600 ? '50px' : '20px';
+        ak47Img.style.top = '50%';
+        ak47Img.style.transform = 'translateY(-50%)';
+        ak47Img.style.width = window.innerWidth > 600 ? '300px' : '150px';
+        ak47Img.style.height = 'auto';
+        ak47Img.style.zIndex = '2000';
+        ak47Img.style.opacity = '0';
+        ak47Img.style.transition = 'opacity 0.5s ease-in';
+        ak47Img.style.maxWidth = '100%';
+        questionContainer.appendChild(ak47Img);
+        
+        setTimeout(() => {
+            ak47Img.style.opacity = '1';
+        }, 100);
+        
+        // Step 3: Shoot 4 bullets
+        setTimeout(() => {
+            shootBullets(ak47Img, noBtn, () => {
+                // Step 4: After all bullets, add bleeding effect
                 setTimeout(() => {
-                    noBtn.remove();
-                }, 600);
-                
-                // Track wrong answer
-                if (questionIndex < quizQuestions.length) {
-                    const question = quizQuestions[questionIndex];
-                    wrongAnswers.push(question.question);
-                }
-                quizScore -= 1;
-            }
-            // Don't go to next question - force user to click "Ja"
-            break;
-        default:
-            currentQuestionIndex++;
-            renderQuestion();
+                    addBleedingEffect(noBtn, () => {
+                        // Step 5: Break button into pieces and make it fall
+                        breakButtonIntoPieces(noBtn, () => {
+                            // Step 6: Remove text and AK47 after button falls
+                            setTimeout(() => {
+                                textElement.remove();
+                                ak47Img.remove();
+                            }, 500);
+                        });
+                    });
+                }, 500);
+            });
+        }, 1000);
+    }, 500);
+}
+
+function shootBullets(ak47Img, targetBtn, callback) {
+    const ak47Rect = ak47Img.getBoundingClientRect();
+    const targetRect = targetBtn.getBoundingClientRect();
+    const container = targetBtn.parentElement;
+    const containerRect = container.getBoundingClientRect();
+    
+    const ak47X = ak47Rect.left - containerRect.left + ak47Rect.width * 0.7;
+    const ak47Y = ak47Rect.top - containerRect.top + ak47Rect.height * 0.5;
+    const targetX = targetRect.left - containerRect.left + targetRect.width / 2;
+    const targetY = targetRect.top - containerRect.top + targetRect.height / 2;
+    
+    let bulletsShot = 0;
+    const totalBullets = 4;
+    
+    // Create bullet holes container
+    const bulletHolesContainer = document.createElement('div');
+    bulletHolesContainer.style.position = 'absolute';
+    bulletHolesContainer.style.left = targetRect.left - containerRect.left + 'px';
+    bulletHolesContainer.style.top = targetRect.top - containerRect.top + 'px';
+    bulletHolesContainer.style.width = targetRect.width + 'px';
+    bulletHolesContainer.style.height = targetRect.height + 'px';
+    bulletHolesContainer.style.pointerEvents = 'none';
+    bulletHolesContainer.style.zIndex = '1500';
+    container.style.position = 'relative';
+    container.appendChild(bulletHolesContainer);
+    
+    function shootSingleBullet() {
+        if (bulletsShot >= totalBullets) {
+            if (callback) callback();
+            return;
+        }
+        
+        // Create bullet
+        const bullet = document.createElement('div');
+        bullet.style.position = 'absolute';
+        bullet.style.left = ak47X + 'px';
+        bullet.style.top = ak47Y + 'px';
+        bullet.style.width = '8px';
+        bullet.style.height = '8px';
+        bullet.style.backgroundColor = '#333';
+        bullet.style.borderRadius = '50%';
+        bullet.style.zIndex = '2000';
+        bullet.style.pointerEvents = 'none';
+        container.appendChild(bullet);
+        
+        // Animate bullet to target
+        setTimeout(() => {
+            const dx = targetX - ak47X;
+            const dy = targetY - ak47Y;
+            bullet.style.transition = 'all 0.2s linear';
+            bullet.style.transform = `translate(${dx}px, ${dy}px)`;
+        }, 10);
+        
+        // Create bullet hole when bullet reaches target
+        setTimeout(() => {
+            bullet.remove();
+            
+            // Create bullet hole
+            const hole = document.createElement('div');
+            const holeX = Math.random() * targetRect.width * 0.6 + targetRect.width * 0.2;
+            const holeY = Math.random() * targetRect.height * 0.6 + targetRect.height * 0.2;
+            hole.style.position = 'absolute';
+            hole.style.left = holeX + 'px';
+            hole.style.top = holeY + 'px';
+            hole.style.width = '12px';
+            hole.style.height = '12px';
+            hole.style.backgroundColor = '#000';
+            hole.style.borderRadius = '50%';
+            hole.style.zIndex = '1501';
+            bulletHolesContainer.appendChild(hole);
+            
+            bulletsShot++;
+            
+            // Shoot next bullet
+            setTimeout(() => {
+                shootSingleBullet();
+            }, 300);
+        }, 220);
     }
+    
+    shootSingleBullet();
+}
+
+function addBleedingEffect(button, callback) {
+    // Create bleeding overlay
+    const bleedingOverlay = document.createElement('div');
+    bleedingOverlay.style.position = 'absolute';
+    const rect = button.getBoundingClientRect();
+    const container = button.parentElement;
+    const containerRect = container.getBoundingClientRect();
+    bleedingOverlay.style.left = rect.left - containerRect.left + 'px';
+    bleedingOverlay.style.top = rect.top - containerRect.top + 'px';
+    bleedingOverlay.style.width = rect.width + 'px';
+    bleedingOverlay.style.height = '0px';
+    bleedingOverlay.style.backgroundColor = '#8B0000';
+    bleedingOverlay.style.zIndex = '1500';
+    bleedingOverlay.style.opacity = '0.8';
+    bleedingOverlay.style.overflow = 'hidden';
+    bleedingOverlay.style.borderRadius = '10px';
+    container.style.position = 'relative';
+    container.appendChild(bleedingOverlay);
+    
+    // Animate blood flowing down
+    setTimeout(() => {
+        bleedingOverlay.style.transition = 'height 1.5s ease-out';
+        bleedingOverlay.style.height = rect.height + 'px';
+        
+        // Add dripping effect
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+                const drop = document.createElement('div');
+                drop.style.position = 'absolute';
+                drop.style.left = (Math.random() * rect.width) + 'px';
+                drop.style.top = rect.height + 'px';
+                drop.style.width = '4px';
+                drop.style.height = '20px';
+                drop.style.backgroundColor = '#8B0000';
+                drop.style.zIndex = '1501';
+                bleedingOverlay.appendChild(drop);
+                
+                setTimeout(() => {
+                    drop.style.transition = 'all 0.5s ease-out';
+                    drop.style.transform = 'translateY(30px)';
+                    drop.style.opacity = '0';
+                }, 10);
+            }, i * 200);
+        }
+        
+        setTimeout(() => {
+            if (callback) callback();
+        }, 2000);
+    }, 100);
+}
+
+function breakButtonIntoPieces(button, callback) {
+    const rect = button.getBoundingClientRect();
+    const container = button.parentElement;
+    const containerRect = container.getBoundingClientRect();
+    const x = rect.left - containerRect.left;
+    const y = rect.top - containerRect.top;
+    
+    // Create pieces
+    const numPieces = 12;
+    const pieces = [];
+    
+    for (let i = 0; i < numPieces; i++) {
+        const piece = document.createElement('div');
+        const pieceWidth = rect.width / 4;
+        const pieceHeight = rect.height / 3;
+        const pieceX = (i % 4) * pieceWidth;
+        const pieceY = Math.floor(i / 4) * pieceHeight;
+        
+        piece.style.position = 'absolute';
+        piece.style.left = (x + pieceX) + 'px';
+        piece.style.top = (y + pieceY) + 'px';
+        piece.style.width = pieceWidth + 'px';
+        piece.style.height = pieceHeight + 'px';
+        piece.style.backgroundColor = '#8B0000';
+        piece.style.borderRadius = '5px';
+        piece.style.zIndex = '1600';
+        piece.style.opacity = '0.9';
+        piece.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+        
+        container.style.position = 'relative';
+        container.appendChild(piece);
+        pieces.push(piece);
+        
+        // Animate piece flying out
+        const angle = (Math.random() - 0.5) * Math.PI * 0.8;
+        const distance = 200 + Math.random() * 300;
+        const rotation = (Math.random() - 0.5) * 720;
+        const fallDistance = window.innerHeight + 200;
+        
+        setTimeout(() => {
+            piece.style.transition = 'all 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            piece.style.transform = `translate(${Math.cos(angle) * distance}px, ${fallDistance}px) rotate(${rotation}deg)`;
+            piece.style.opacity = '0';
+        }, 10);
+    }
+    
+    // Hide original button
+    button.style.opacity = '0';
+    button.style.pointerEvents = 'none';
+    
+    // Remove pieces after animation
+    setTimeout(() => {
+        pieces.forEach(piece => piece.remove());
+        button.remove();
+        if (callback) callback();
+    }, 1600);
 }
 
 function showResult() {
@@ -515,6 +892,7 @@ window.restartQuiz = function() {
     initialSection.classList.remove('hidden');
     initialSection.classList.add('active');
     noClickCount = 0;
+    noButtonClickCount = 0;
     document.getElementById('result-container').classList.add('hidden');
     document.getElementById('question-container').classList.remove('hidden');
     startQuiz();

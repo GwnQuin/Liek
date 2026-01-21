@@ -244,6 +244,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    position: relative;
+    min-height: 100px;
 }
 
 .answer-btn {
@@ -291,6 +293,12 @@ body {
     display: none;
 }
 
+/* AK47 Sequence Styles */
+.answer-btn.moving-aggressive {
+    transition: all 0.15s ease-out !important;
+}
+
+/* Mobile optimizations for aggressive button movement */
 @media (max-width: 600px) {
     .title {
         font-size: 2rem;
@@ -331,5 +339,14 @@ body {
     
     .timer-label {
         font-size: 1rem;
+    }
+    
+    .answer-options {
+        min-height: 80px;
+    }
+    
+    .answer-btn {
+        font-size: 1rem;
+        padding: 12px 25px;
     }
 }

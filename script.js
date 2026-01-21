@@ -176,7 +176,7 @@ const quizQuestions = [
         question: "Heb je hem vermoord ofzo? 😰",
         answers: [
             { text: "Ja", path: "continue", action: "veryNegative", isCorrect: false },
-            { text: "Nee", path: "continue", action: "negative", isCorrect: true }
+            { text: "Nee zou ik nooit durven hou te veel van hem🥰 ", path: "continue", action: "negative", isCorrect: true }
         ],
         isConditional: true
     },
@@ -195,7 +195,7 @@ const quizQuestions = [
         ]
     },
     {
-        question: "Ben je een bleg?",
+        question: "Ben je een belg?",
         answers: [
             { text: "Ja", path: "continue", action: "softFail", isCorrect: false },
             { text: "Nee", path: "continue", action: "good", isCorrect: true }
@@ -218,8 +218,8 @@ const quizQuestions = [
     {
         question: "Ben je duits?",
         answers: [
-            { text: "Ja", path: "continue", action: "softFail", isCorrect: false },
-            { text: "Nee", path: "continue", action: "good", isCorrect: true }
+            { text: "Ja (heil hietler)", path: "continue", action: "softFail", isCorrect: false },
+            { text: "Nee", path: "continue", action: "good", isCorrect: true }, // dit is de fout antwoord  dit moet het fout antwoord zijn
         ]
     },
     {
@@ -227,8 +227,8 @@ const quizQuestions = [
         hasImage: true,
         imagePath: "IMG_4715.JPG",
         answers: [
-            { text: "Ja", path: "continue", action: "good", isCorrect: true },
-            { text: "Nee", path: "continue", action: "explode", isCorrect: false }
+            { text: "JAAAAAAAAA EXTREEM🥰😍", path: "continue", action: "good", isCorrect: true },
+            { text: "Nee", path: "continue", action: "explode", isCorrect: true }, // dit is de fout antwoord
         ]
     }
 ];

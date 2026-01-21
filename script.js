@@ -118,7 +118,11 @@ const noBtnClickHandler = function(e) {
         // Move button away first (synchronous, no delay)
         moveButtonAway(noBtn);
         initialNoButtonClickCount++;
-        // Don't increment noClickCount on first click - it should start showing messages from 2nd click
+        noClickCount++;
+        // Show first angry message immediately
+        if (noClickCount <= angryMessages.length) {
+            showAngerMessage(angryMessages[noClickCount - 1]);
+        }
         
         // Re-enable yes button after 1 second cooldown
         setTimeout(() => {
@@ -171,15 +175,15 @@ const noBtnClickHandler = function(e) {
     initialNoButtonClickCount++;
     noClickCount++;
     
-    if (initialNoButtonClickCount < 4) {
-        // Show angry message based on click count (2nd click = first message, 3rd = second, etc.)
+    if (initialNoButtonClickCount < 3) {
+        // Show angry message based on click count (1st click = first message, 2nd = second, etc.)
         if (noClickCount <= angryMessages.length) {
             showAngerMessage(angryMessages[noClickCount - 1]);
         } else {
             showAngerMessage("OKÉ OKÉ! IK GEEF TOE! 😭 Quin houdt WEL van je!");
         }
     } else {
-        // After 4 clicks on initial "nee" button: AK47 sequence
+        // After 3 clicks on initial "nee" button: AK47 sequence (eentje eerder)
         handleInitialAK47Sequence(noBtn);
     }
     

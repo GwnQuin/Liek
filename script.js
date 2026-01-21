@@ -69,13 +69,18 @@ const noBtnClickHandler = function(e) {
             }, 1100);
         }
         
-        // Block yes button completely
+        // Block yes button completely by removing and re-adding listener
+        yesBtn.removeEventListener('click', yesBtnClickHandler);
         const yesBtnClickBlocker = (e) => {
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
+            return false;
         };
         yesBtn.addEventListener('click', yesBtnClickBlocker, true);
+        
+        // Store blocker reference for later removal
+        window.__yesBtnBlocker = yesBtnClickBlocker;
         
         // Move button away first (synchronous, no delay)
         moveButtonAway(noBtn);
@@ -88,7 +93,15 @@ const noBtnClickHandler = function(e) {
             yesBtn.disabled = false;
             yesBtn.style.opacity = '1';
             yesBtn.style.cursor = 'pointer';
-            yesBtn.removeEventListener('click', yesBtnClickBlocker, true);
+            // Remove blocker and re-add original handler
+            if (window.__yesBtnBlocker) {
+                yesBtn.removeEventListener('click', window.__yesBtnBlocker, true);
+                window.__yesBtnBlocker = null;
+            }
+            // Re-add original handler after a small delay
+            setTimeout(() => {
+                yesBtn.addEventListener('click', yesBtnClickHandler);
+            }, 50);
         }, 1000);
         
         // Wait for button to actually move (after transition), then activate yes button
@@ -279,7 +292,7 @@ function showAngerMessage(message) {
 }
 
 // When Yes button is clicked, show quiz
-yesBtn.addEventListener('click', (e) => {
+const yesBtnClickHandler = function(e) {
     // Block if no button is being processed or navigation is blocked
     if (isProcessingNoButton || window.__blockNavigation) {
         e.preventDefault();
@@ -288,12 +301,19 @@ yesBtn.addEventListener('click', (e) => {
         return false;
     }
     
+    // Double check - if flags are set, don't proceed
+    if (isProcessingNoButton || window.__blockNavigation) {
+        return false;
+    }
+    
     initialSection.classList.remove('active');
     initialSection.classList.add('hidden');
     quizSection.classList.remove('hidden');
     quizSection.classList.add('active');
     startQuiz();
-});
+};
+
+yesBtn.addEventListener('click', yesBtnClickHandler);
 
 // Quiz logic
 let quizScore = 0;
@@ -388,6 +408,11 @@ let askedMurderQuestion = false;
 let noButtonClickCount = 0; // Track clicks on "nee" button for "Is zij knap?" question
 
 function startQuiz() {
+    // Block if navigation is blocked
+    if (isProcessingNoButton || window.__blockNavigation) {
+        return false;
+    }
+    
     currentQuestionIndex = 0;
     quizScore = 0;
     hasFailed = false;

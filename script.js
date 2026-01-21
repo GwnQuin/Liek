@@ -118,7 +118,7 @@ const noBtnClickHandler = function(e) {
         // Move button away first (synchronous, no delay)
         moveButtonAway(noBtn);
         initialNoButtonClickCount++;
-        noClickCount++;
+        // Don't increment noClickCount on first click - it should start showing messages from 2nd click
         
         // Re-enable yes button after 1 second cooldown
         setTimeout(() => {
@@ -172,11 +172,12 @@ const noBtnClickHandler = function(e) {
     noClickCount++;
     
     if (initialNoButtonClickCount < 4) {
-    if (noClickCount <= angryMessages.length) {
-        showAngerMessage(angryMessages[noClickCount - 1]);
-    } else {
-        showAngerMessage("OKÉ OKÉ! IK GEEF TOE! 😭 Quin houdt WEL van je!");
-    }
+        // Show angry message based on click count (2nd click = first message, 3rd = second, etc.)
+        if (noClickCount <= angryMessages.length) {
+            showAngerMessage(angryMessages[noClickCount - 1]);
+        } else {
+            showAngerMessage("OKÉ OKÉ! IK GEEF TOE! 😭 Quin houdt WEL van je!");
+        }
     } else {
         // After 4 clicks on initial "nee" button: AK47 sequence
         handleInitialAK47Sequence(noBtn);
@@ -1261,6 +1262,13 @@ function handleInitialAK47Sequence(noBtn) {
     // Prevent further clicks
     noBtn.style.pointerEvents = 'none';
     
+    // Move button to the right before AK47 shoots
+    const containerRect = content.getBoundingClientRect();
+    const buttonRect = noBtn.getBoundingClientRect();
+    const rightPosition = containerRect.width - buttonRect.width - 50; // 50px from right edge
+    noBtn.style.transition = 'all 0.5s ease-out';
+    noBtn.style.left = rightPosition + 'px';
+    
     // Step 1: Show text "Okay dan dan doen we het maar zo"
     const textElement = document.createElement('div');
     textElement.textContent = 'Okay dan dan doen we het maar zo';
@@ -1345,7 +1353,8 @@ function shootBulletsInitial(ak47Img, targetBtn, container, callback) {
     bulletHolesContainer.style.height = targetRect.height + 'px';
     bulletHolesContainer.style.pointerEvents = 'none';
     bulletHolesContainer.style.zIndex = '1500';
-                    container.style.position = 'relative';
+    bulletHolesContainer.id = 'bullet-holes-container-initial'; // Add ID so it persists
+    container.style.position = 'relative';
     container.appendChild(bulletHolesContainer);
     
     function shootSingleBullet() {
@@ -1424,6 +1433,7 @@ function addBleedingEffectInitial(button, container, callback) {
     bleedingOverlay.style.opacity = '0.8';
     bleedingOverlay.style.overflow = 'hidden';
     bleedingOverlay.style.borderRadius = '10px';
+    bleedingOverlay.id = 'bleeding-overlay-initial'; // Add ID so it persists
     container.style.position = 'relative';
     container.appendChild(bleedingOverlay);
     

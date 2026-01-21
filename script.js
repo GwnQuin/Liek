@@ -23,10 +23,6 @@ let isProcessingNoButton = false;
 
 // Remove any existing click listeners and add new one with capture phase
 const noBtnClickHandler = function(e) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:25',message:'noBtnClickHandler ENTRY',data:{target:e.target?.id,currentTarget:e.currentTarget?.id,isProcessingNoButton,initialNoButtonClickCount},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
-    // #endregion
-    
     // Block everything immediately
     e.preventDefault();
     e.stopPropagation();
@@ -34,9 +30,6 @@ const noBtnClickHandler = function(e) {
     
     // If already processing, ignore
     if (isProcessingNoButton) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:33',message:'noBtnClickHandler ALREADY PROCESSING',data:{isProcessingNoButton},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         return false;
     }
     
@@ -46,20 +39,9 @@ const noBtnClickHandler = function(e) {
         isProcessingNoButton = true;
         window.__blockNavigation = true;
         
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:39',message:'FLAGS SET',data:{isProcessingNoButton,__blockNavigation:window.__blockNavigation,hasYesBtn:!!yesBtn,hasHandler:!!window.__yesBtnClickHandler},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,D'})}).catch(()=>{});
-        // #endregion
-        
         // Remove yesBtn event listener IMMEDIATELY to prevent it from firing
         if (yesBtn && window.__yesBtnClickHandler) {
             yesBtn.removeEventListener('click', window.__yesBtnClickHandler);
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:44',message:'yesBtn listener REMOVED',data:{hasYesBtn:!!yesBtn,hasHandler:!!window.__yesBtnClickHandler},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,E'})}).catch(()=>{});
-            // #endregion
-        } else {
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:44',message:'yesBtn listener NOT REMOVED',data:{hasYesBtn:!!yesBtn,hasHandler:!!window.__yesBtnClickHandler},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,E'})}).catch(()=>{});
-            // #endregion
         }
         
         // Temporarily disable button to prevent immediate re-clicks during movement
@@ -73,7 +55,6 @@ const noBtnClickHandler = function(e) {
             noBtn.style.pointerEvents = 'auto';
             noBtn.disabled = false;
             noBtn.removeAttribute('disabled');
-            console.log('[DEBUG v3] noBtn re-enabled for subsequent clicks');
         }, 350); // After button movement transition (0.3s)
         
         // Disable yes button for 1 second cooldown
@@ -148,24 +129,11 @@ const noBtnClickHandler = function(e) {
         // DO NOT start quiz automatically on first click - just move button away
         // Reset flags after a delay to allow button to move, but DO NOT start quiz
         setTimeout(() => {
-            // #region agent log
-            console.log('[DEBUG v3] Resetting flags after button move (NO quiz start)', {isProcessingNoButton,__blockNavigation:window.__blockNavigation,codeVersion:'v3-fixed-no-auto-start'});
-            fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:137',message:'Resetting flags after button move (NO quiz start) - NEW CODE VERSION v3',data:{isProcessingNoButton,__blockNavigation:window.__blockNavigation,codeVersion:'v3-fixed-no-auto-start'},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'C'})}).catch(()=>{});
-            // #endregion
-            
             // Reset flags but DO NOT start quiz - user must click "ja" manually
             // CRITICAL: Do NOT call startQuiz() here - this was the bug!
             // The old code had: startQuiz(); here - that's been removed
             isProcessingNoButton = false;
             window.__blockNavigation = false;
-            
-            // #region agent log
-            console.log('[DEBUG v3] Flags reset - NO startQuiz() called', {isProcessingNoButton,__blockNavigation:window.__blockNavigation});
-            fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:145',message:'Flags reset - NO startQuiz() called - v3',data:{isProcessingNoButton,__blockNavigation:window.__blockNavigation},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'C'})}).catch(()=>{});
-            // #endregion
-            
-            // VERIFICATION: If you see this log but still get redirected, there's another code path calling startQuiz()
-            console.log('[DEBUG v3] VERIFICATION: setTimeout completed - startQuiz() was NOT called');
         }, 1000); // 1 second delay after button starts moving
         
         return false;
@@ -200,9 +168,6 @@ if (noBtn) {
     
     // Add mouseenter listener
     noBtn.addEventListener('mouseenter', () => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:195',message:'mouseenter event',data:{initialNoButtonClickCount,isProcessingNoButton},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'F'})}).catch(()=>{});
-        // #endregion
         if (initialNoButtonClickCount === 0 && !isProcessingNoButton) {
             moveButtonAway(noBtn);
         }
@@ -217,9 +182,6 @@ if (noBtn) {
             // Block all clicks on yes button or container during processing
             if (e.target === yesBtn || yesBtn.contains(e.target) || 
                 e.target.closest('.button-container') === noBtn.closest('.button-container')) {
-                // #region agent log
-                fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:156',message:'document click BLOCKED',data:{target:e.target?.id,isProcessingNoButton,__blockNavigation:window.__blockNavigation},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-                // #endregion
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
@@ -347,15 +309,8 @@ function showAngerMessage(message) {
 // When Yes button is clicked, show quiz
 // Define handler early so it can be referenced
 let yesBtnClickHandler = function(e) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:306',message:'yesBtnClickHandler ENTRY',data:{target:e.target?.id,currentTarget:e.currentTarget?.id,isProcessingNoButton,__blockNavigation:window.__blockNavigation,eventPhase:e.eventPhase},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,D'})}).catch(()=>{});
-    // #endregion
-    
     // Block if no button is being processed or navigation is blocked
     if (isProcessingNoButton || window.__blockNavigation) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:308',message:'yesBtnClickHandler BLOCKED',data:{isProcessingNoButton,__blockNavigation:window.__blockNavigation},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,D'})}).catch(()=>{});
-        // #endregion
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
@@ -364,15 +319,8 @@ let yesBtnClickHandler = function(e) {
     
     // Double check - if flags are set, don't proceed
     if (isProcessingNoButton || window.__blockNavigation) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:316',message:'yesBtnClickHandler BLOCKED (double check)',data:{isProcessingNoButton,__blockNavigation:window.__blockNavigation},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,D'})}).catch(()=>{});
-        // #endregion
         return false;
     }
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:320',message:'yesBtnClickHandler PROCEEDING',data:{isProcessingNoButton,__blockNavigation:window.__blockNavigation},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
-    // #endregion
     
     initialSection.classList.remove('active');
     initialSection.classList.add('hidden');
@@ -479,21 +427,10 @@ let askedMurderQuestion = false;
 let noButtonClickCount = 0; // Track clicks on "nee" button for "Is zij knap?" question
 
 function startQuiz() {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:390',message:'startQuiz ENTRY',data:{isProcessingNoButton,__blockNavigation:window.__blockNavigation,stack:new Error().stack?.split('\n').slice(1,4).join('|')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
-    
     // Block if navigation is blocked
     if (isProcessingNoButton || window.__blockNavigation) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:393',message:'startQuiz BLOCKED',data:{isProcessingNoButton,__blockNavigation:window.__blockNavigation},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C,D'})}).catch(()=>{});
-        // #endregion
         return false;
     }
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/d79975d9-241c-4255-a58f-9cec697ecb35',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:400',message:'startQuiz PROCEEDING',data:{isProcessingNoButton,__blockNavigation:window.__blockNavigation},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     
     currentQuestionIndex = 0;
     quizScore = 0;

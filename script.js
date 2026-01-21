@@ -62,10 +62,19 @@ const noBtnClickHandler = function(e) {
             // #endregion
         }
         
-        // Disable button immediately to prevent any further clicks
+        // Temporarily disable button to prevent immediate re-clicks during movement
+        // But re-enable it after movement so user can click again for angry messages
         noBtn.style.pointerEvents = 'none';
         noBtn.disabled = true;
         noBtn.setAttribute('disabled', 'disabled');
+        
+        // Re-enable button after movement completes so user can click again
+        setTimeout(() => {
+            noBtn.style.pointerEvents = 'auto';
+            noBtn.disabled = false;
+            noBtn.removeAttribute('disabled');
+            console.log('[DEBUG v3] noBtn re-enabled for subsequent clicks');
+        }, 350); // After button movement transition (0.3s)
         
         // Disable yes button for 1 second cooldown
         if (yesBtn) {

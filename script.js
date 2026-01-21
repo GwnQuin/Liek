@@ -1463,7 +1463,7 @@ function addBleedingEffectInitial(button, container, callback) {
         }
         
         setTimeout(() => {
-            if (callback) callback();
+            if (callback) callback(bleedingOverlay); // Pass bleeding overlay to callback so it can persist
         }, 2000);
     }, 100);
 }

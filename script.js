@@ -40,7 +40,7 @@ const noBtnClickHandler = function(e) {
         window.__blockNavigation = true;
         
         // Remove yesBtn event listener IMMEDIATELY to prevent it from firing
-        if (window.__yesBtnClickHandler) {
+        if (yesBtn && window.__yesBtnClickHandler) {
             yesBtn.removeEventListener('click', window.__yesBtnClickHandler);
         }
         
@@ -50,10 +50,12 @@ const noBtnClickHandler = function(e) {
         noBtn.setAttribute('disabled', 'disabled');
         
         // Disable yes button for 1 second cooldown
-        yesBtn.style.pointerEvents = 'none';
-        yesBtn.disabled = true;
-        yesBtn.style.opacity = '0.5';
-        yesBtn.style.cursor = 'not-allowed';
+        if (yesBtn) {
+            yesBtn.style.pointerEvents = 'none';
+            yesBtn.disabled = true;
+            yesBtn.style.opacity = '0.5';
+            yesBtn.style.cursor = 'not-allowed';
+        }
         
         // Also disable the container and yes button to prevent any bubbling
         const container = noBtn.parentElement;
@@ -73,16 +75,18 @@ const noBtnClickHandler = function(e) {
         }
         
         // Block yes button completely with additional blocker
-        const yesBtnClickBlocker = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            return false;
-        };
-        yesBtn.addEventListener('click', yesBtnClickBlocker, true);
-        
-        // Store blocker reference for later removal
-        window.__yesBtnBlocker = yesBtnClickBlocker;
+        if (yesBtn) {
+            const yesBtnClickBlocker = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                return false;
+            };
+            yesBtn.addEventListener('click', yesBtnClickBlocker, true);
+            
+            // Store blocker reference for later removal
+            window.__yesBtnBlocker = yesBtnClickBlocker;
+        }
         
         // Move button away first (synchronous, no delay)
         moveButtonAway(noBtn);
@@ -91,21 +95,23 @@ const noBtnClickHandler = function(e) {
         
         // Re-enable yes button after 1 second cooldown
         setTimeout(() => {
-            yesBtn.style.pointerEvents = 'auto';
-            yesBtn.disabled = false;
-            yesBtn.style.opacity = '1';
-            yesBtn.style.cursor = 'pointer';
-            // Remove blocker and re-add original handler
-            if (window.__yesBtnBlocker) {
-                yesBtn.removeEventListener('click', window.__yesBtnBlocker, true);
-                window.__yesBtnBlocker = null;
-            }
-            // Re-add original handler after a small delay
-            setTimeout(() => {
-                if (window.__yesBtnClickHandler) {
-                    yesBtn.addEventListener('click', window.__yesBtnClickHandler);
+            if (yesBtn) {
+                yesBtn.style.pointerEvents = 'auto';
+                yesBtn.disabled = false;
+                yesBtn.style.opacity = '1';
+                yesBtn.style.cursor = 'pointer';
+                // Remove blocker and re-add original handler
+                if (window.__yesBtnBlocker) {
+                    yesBtn.removeEventListener('click', window.__yesBtnBlocker, true);
+                    window.__yesBtnBlocker = null;
                 }
-            }, 50);
+                // Re-add original handler after a small delay
+                setTimeout(() => {
+                    if (yesBtn && window.__yesBtnClickHandler) {
+                        yesBtn.addEventListener('click', window.__yesBtnClickHandler);
+                    }
+                }, 50);
+            }
         }, 1000);
         
         // Wait for button to actually move (after transition), then activate yes button

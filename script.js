@@ -1314,17 +1314,18 @@ function handleInitialAK47Sequence(noBtn) {
         // Step 3: Shoot 4 bullets (bleeding starts during shooting)
         setTimeout(() => {
             // Start bleeding effect during shooting
-            addBleedingEffectInitial(noBtn, content, () => {
+            addBleedingEffectInitial(noBtn, content, (bleedingOverlay) => {
                 // After bleeding, break button into pieces
                 breakButtonIntoPiecesInitial(noBtn, content, () => {
-                    // Remove text and AK47 after button falls
+                    // Remove text and AK47 after button falls, but KEEP bleeding overlay and bullet holes
                     setTimeout(() => {
                         textElement.remove();
                         ak47Img.remove();
+                        // DO NOT remove bleedingOverlay - it should persist
                     }, 500);
                 });
             });
-            // Shoot bullets (faster, with recoil)
+            // Shoot bullets (faster, with recoil) - bullet holes container will persist automatically
             shootBulletsInitial(ak47Img, noBtn, content, () => {
                 // Callback after all bullets are shot
             });

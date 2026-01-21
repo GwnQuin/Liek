@@ -243,7 +243,7 @@ function startQuiz() {
     hasFailed = false;
     wrongAnswers = [];
     askedMurderQuestion = false;
-    noButtonClickCount = 0;
+    noButtonClickCount = 0; // Reset counter
     renderQuestion();
 }
 
@@ -296,15 +296,23 @@ function renderQuestion() {
     
     // Add aggressive movement to "nee" button for "Is zij knap?" question
     if (question.question === "Is zij knap?") {
+        // Reset click count for this question
+        noButtonClickCount = 0;
         setTimeout(() => {
             const noBtn = document.getElementById('answer-btn-1');
             if (noBtn) {
+                // Reset any existing positioning
+                noBtn.style.position = '';
+                noBtn.style.left = '';
+                noBtn.style.top = '';
+                // Force reflow
+                noBtn.offsetHeight;
                 // Initial positioning - make sure it's not on top of Yes button
                 positionButtonAwayFromYes(noBtn);
                 // Make button move aggressively
                 makeButtonMoveAggressively(noBtn);
             }
-        }, 100);
+        }, 150);
     }
 }
 
@@ -312,25 +320,55 @@ function positionButtonAwayFromYes(noBtn) {
     const container = noBtn.parentElement;
     const containerRect = container.getBoundingClientRect();
     const yesBtn = document.getElementById('answer-btn-0');
-    const buttonRect = noBtn.getBoundingClientRect();
     
     if (!yesBtn) return;
     
+    // Get button dimensions
+    const buttonRect = noBtn.getBoundingClientRect();
     const yesRect = yesBtn.getBoundingClientRect();
-    const yesCenterX = yesRect.left - containerRect.left + yesRect.width / 2;
-    const yesCenterY = yesRect.top - containerRect.top + yesRect.height / 2;
     
-    // Find a position away from Yes button
+    // Calculate positions relative to container
+    const yesLeft = yesRect.left - containerRect.left;
+    const yesTop = yesRect.top - containerRect.top;
+    const yesRight = yesLeft + yesRect.width;
+    const yesBottom = yesTop + yesRect.height;
+    const yesCenterX = yesLeft + yesRect.width / 2;
+    const yesCenterY = yesTop + yesRect.height / 2;
+    
+    // Get question and image boundaries
+    const questionElement = document.querySelector('.question');
+    const imageElement = document.querySelector('.answer-options')?.previousElementSibling?.querySelector('img');
+    
+    let questionBottom = 0;
+    if (questionElement) {
+        const qRect = questionElement.getBoundingClientRect();
+        questionBottom = qRect.bottom - containerRect.top + 20;
+    }
+    
+    let imageBounds = null;
+    if (imageElement) {
+        const imgRect = imageElement.getBoundingClientRect();
+        imageBounds = {
+            left: imgRect.left - containerRect.left,
+            right: imgRect.right - containerRect.left,
+            top: imgRect.top - containerRect.top,
+            bottom: imgRect.bottom - containerRect.top
+        };
+    }
+    
+    // Find a position away from Yes button and other elements
     let attempts = 0;
     let newX, newY;
+    const minDistance = 200; // Minimum distance from Yes button
     
     do {
         const maxX = Math.max(0, containerRect.width - buttonRect.width - 20);
         const maxY = Math.max(0, containerRect.height - buttonRect.height - 20);
         
         newX = Math.max(0, Math.random() * maxX);
-        newY = Math.max(0, Math.random() * maxY);
+        newY = Math.max(questionBottom, Math.random() * maxY);
         
+        // Check distance from Yes button
         const newCenterX = newX + buttonRect.width / 2;
         const newCenterY = newY + buttonRect.height / 2;
         const distance = Math.sqrt(
@@ -338,13 +376,41 @@ function positionButtonAwayFromYes(noBtn) {
             Math.pow(newCenterY - yesCenterY, 2)
         );
         
-        if (distance >= 200) break; // At least 200px away
-        attempts++;
-    } while (attempts < 100);
+        if (distance < minDistance) {
+            attempts++;
+            continue;
+        }
+        
+        // Check collision with image
+        if (imageBounds) {
+            const newRight = newX + buttonRect.width;
+            const newBottom = newY + buttonRect.height;
+            
+            if (!(newRight < imageBounds.left || newX > imageBounds.right || 
+                  newBottom < imageBounds.top || newY > imageBounds.bottom)) {
+                attempts++;
+                continue;
+            }
+        }
+        
+        // Check if button overlaps with Yes button
+        const newRight = newX + buttonRect.width;
+        const newBottom = newY + buttonRect.height;
+        
+        if (!(newRight < yesLeft || newX > yesRight || newBottom < yesTop || newY > yesBottom)) {
+            attempts++;
+            continue;
+        }
+        
+        // Valid position found
+        break;
+    } while (attempts < 200);
     
+    // Apply positioning
     noBtn.style.position = 'absolute';
     noBtn.style.left = newX + 'px';
     noBtn.style.top = newY + 'px';
+    noBtn.style.transition = 'none'; // No transition for initial positioning
 }
 
 function makeButtonMoveAggressively(button) {
@@ -505,10 +571,11 @@ function selectAnswer(action, questionIndex, isCorrect) {
             renderQuestion();
             break;
         case "explode":
+            // NEVER track as wrong answer for explode action
             noButtonClickCount++;
             const noBtn = document.getElementById('answer-btn-1');
             if (noBtn) {
-                // Prevent further clicks temporarily
+                // Prevent further clicks immediately
                 noBtn.style.pointerEvents = 'none';
                 
                 if (noButtonClickCount < 4) {
@@ -527,7 +594,7 @@ function selectAnswer(action, questionIndex, isCorrect) {
                 }
             }
             // Don't track as wrong answer and don't go to next question
-            break;
+            return; // Use return instead of break to ensure no further processing
         default:
             currentQuestionIndex++;
             renderQuestion();
@@ -535,9 +602,9 @@ function selectAnswer(action, questionIndex, isCorrect) {
 }
 
 function explodeButtonSimple(button) {
-    const container = button.parentElement;
+    const questionContainer = document.getElementById('question-container');
     const rect = button.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
+    const containerRect = questionContainer.getBoundingClientRect();
     const x = rect.left - containerRect.left;
     const y = rect.top - containerRect.top;
     
@@ -567,19 +634,20 @@ function explodeButtonSimple(button) {
         piece.style.opacity = '0.9';
         piece.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
         piece.style.overflow = 'hidden';
+        piece.style.pointerEvents = 'none';
         
-        container.style.position = 'relative';
-        container.appendChild(piece);
+        questionContainer.style.position = 'relative';
+        questionContainer.appendChild(piece);
         pieces.push(piece);
         
         // Animate piece flying out and raining down
         const angle = (Math.random() - 0.5) * Math.PI * 0.6; // Less horizontal spread
-        const horizontalDistance = (Math.random() - 0.5) * 150;
-        const verticalDistance = window.innerHeight + 300; // Fall down
-        const rotation = (Math.random() - 0.5) * 360;
+        const horizontalDistance = (Math.random() - 0.5) * 200;
+        const verticalDistance = window.innerHeight + 400; // Fall down further
+        const rotation = (Math.random() - 0.5) * 720;
         
         setTimeout(() => {
-            piece.style.transition = 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)';
+            piece.style.transition = 'all 1.5s cubic-bezier(0.4, 0, 0.6, 1)';
             piece.style.transform = `translate(${horizontalDistance}px, ${verticalDistance}px) rotate(${rotation}deg)`;
             piece.style.opacity = '0';
         }, 10);
@@ -594,7 +662,7 @@ function explodeButtonSimple(button) {
         pieces.forEach(piece => piece.remove());
         button.style.opacity = '1';
         button.style.pointerEvents = 'auto';
-    }, 1300);
+    }, 1600);
 }
 
 function handleAK47Sequence(noBtn) {

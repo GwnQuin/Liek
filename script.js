@@ -1432,43 +1432,72 @@ function addBleedingEffectInitial(button, container, callback) {
     bleedingOverlay.style.left = (rect.left - containerRect.left) + 'px';
     bleedingOverlay.style.top = (rect.top - containerRect.top) + 'px';
     bleedingOverlay.style.width = rect.width + 'px';
-    bleedingOverlay.style.height = '0px';
+    bleedingOverlay.style.height = rect.height + 'px';
     bleedingOverlay.style.backgroundColor = '#8B0000';
     bleedingOverlay.style.zIndex = '1500';
     bleedingOverlay.style.opacity = '0.8';
-    bleedingOverlay.style.overflow = 'hidden';
+    bleedingOverlay.style.overflow = 'visible';
     bleedingOverlay.style.borderRadius = '10px';
+    bleedingOverlay.style.clipPath = 'none'; // Match button shape
     bleedingOverlay.id = 'bleeding-overlay-initial'; // Add ID so it persists
     container.style.position = 'relative';
     container.appendChild(bleedingOverlay);
     
-                setTimeout(() => {
-        bleedingOverlay.style.transition = 'height 1.5s ease-out';
-        bleedingOverlay.style.height = rect.height + 'px';
-        
-        for (let i = 0; i < 5; i++) {
+    // Create dripping blood effect - multiple drops that fall down
+    setTimeout(() => {
+        // Create multiple blood drops that drip down
+        for (let i = 0; i < 15; i++) {
             setTimeout(() => {
                 const drop = document.createElement('div');
+                const dropX = Math.random() * rect.width;
+                const dropWidth = 3 + Math.random() * 4; // Variable width
+                const dropHeight = 15 + Math.random() * 25; // Variable height
                 drop.style.position = 'absolute';
-                drop.style.left = (Math.random() * rect.width) + 'px';
+                drop.style.left = dropX + 'px';
                 drop.style.top = rect.height + 'px';
-                drop.style.width = '4px';
-                drop.style.height = '20px';
+                drop.style.width = dropWidth + 'px';
+                drop.style.height = dropHeight + 'px';
                 drop.style.backgroundColor = '#8B0000';
+                drop.style.borderRadius = '50% 50% 50% 50% / 60% 60% 40% 40%'; // Teardrop shape
                 drop.style.zIndex = '1501';
+                drop.style.opacity = '0.9';
+                drop.style.boxShadow = '0 0 3px rgba(139, 0, 0, 0.5)';
                 bleedingOverlay.appendChild(drop);
                 
+                // Animate drop falling down
                 setTimeout(() => {
-                    drop.style.transition = 'all 0.5s ease-out';
-                    drop.style.transform = 'translateY(30px)';
+                    const fallDistance = 50 + Math.random() * 100;
+                    drop.style.transition = 'all 0.8s ease-in';
+                    drop.style.transform = `translateY(${fallDistance}px)`;
                     drop.style.opacity = '0';
                 }, 10);
+            }, i * 150); // Stagger drops
+        }
+        
+        // Create additional blood streaks that flow down the button
+        for (let i = 0; i < 8; i++) {
+            setTimeout(() => {
+                const streak = document.createElement('div');
+                const streakX = Math.random() * rect.width;
+                const streakWidth = 2 + Math.random() * 3;
+                const streakHeight = rect.height * (0.3 + Math.random() * 0.7);
+                streak.style.position = 'absolute';
+                streak.style.left = streakX + 'px';
+                streak.style.top = '0px';
+                streak.style.width = streakWidth + 'px';
+                streak.style.height = streakHeight + 'px';
+                streak.style.backgroundColor = '#8B0000';
+                streak.style.borderRadius = '2px';
+                streak.style.zIndex = '1501';
+                streak.style.opacity = '0.7';
+                streak.style.transform = `translateY(${Math.random() * 10}px)`;
+                bleedingOverlay.appendChild(streak);
             }, i * 200);
         }
         
         setTimeout(() => {
             if (callback) callback(bleedingOverlay); // Pass bleeding overlay to callback so it can persist
-        }, 2000);
+        }, 3000);
     }, 100);
 }
 

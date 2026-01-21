@@ -43,6 +43,12 @@ const noBtnClickHandler = function(e) {
         noBtn.disabled = true;
         noBtn.setAttribute('disabled', 'disabled');
         
+        // Disable yes button for 1 second cooldown
+        yesBtn.style.pointerEvents = 'none';
+        yesBtn.disabled = true;
+        yesBtn.style.opacity = '0.5';
+        yesBtn.style.cursor = 'not-allowed';
+        
         // Also disable the container to prevent any bubbling
         const container = noBtn.parentElement;
         if (container) {
@@ -53,9 +59,17 @@ const noBtnClickHandler = function(e) {
         }
         
         // Move button away first (synchronous, no delay)
-        moveButtonAway(noBtn);
+    moveButtonAway(noBtn);
         initialNoButtonClickCount++;
-        noClickCount++;
+    noClickCount++;
+    
+        // Re-enable yes button after 1 second cooldown
+        setTimeout(() => {
+            yesBtn.style.pointerEvents = 'auto';
+            yesBtn.disabled = false;
+            yesBtn.style.opacity = '1';
+            yesBtn.style.cursor = 'pointer';
+        }, 1000);
         
         // Wait for button to actually move (after transition), then activate yes button
         setTimeout(() => {
@@ -77,11 +91,11 @@ const noBtnClickHandler = function(e) {
     noClickCount++;
     
     if (initialNoButtonClickCount < 4) {
-        if (noClickCount <= angryMessages.length) {
-            showAngerMessage(angryMessages[noClickCount - 1]);
-        } else {
-            showAngerMessage("OKÉ OKÉ! IK GEEF TOE! 😭 Quin houdt WEL van je!");
-        }
+    if (noClickCount <= angryMessages.length) {
+        showAngerMessage(angryMessages[noClickCount - 1]);
+    } else {
+        showAngerMessage("OKÉ OKÉ! IK GEEF TOE! 😭 Quin houdt WEL van je!");
+    }
     } else {
         // After 4 clicks on initial "nee" button: AK47 sequence
         handleInitialAK47Sequence(noBtn);
@@ -826,9 +840,9 @@ function explodeButtonPermanent(button) {
 
 function handleAK47Sequence(noBtn) {
     const questionContainer = document.getElementById('question-container');
-    const container = noBtn.parentElement;
+                const container = noBtn.parentElement;
     const containerRect = container.getBoundingClientRect();
-    const rect = noBtn.getBoundingClientRect();
+                const rect = noBtn.getBoundingClientRect();
     
     // Step 1: Show text "Okay dan dan doen we het maar zo"
     const textElement = document.createElement('div');
@@ -1170,7 +1184,7 @@ function handleInitialAK47Sequence(noBtn) {
 function shootBulletsInitial(ak47Img, targetBtn, container, callback) {
     const ak47Rect = ak47Img.getBoundingClientRect();
     const targetRect = targetBtn.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
     
     const ak47X = ak47Rect.left - containerRect.left + ak47Rect.width * 0.7;
     const ak47Y = ak47Rect.top - containerRect.top + ak47Rect.height * 0.5;
@@ -1188,7 +1202,7 @@ function shootBulletsInitial(ak47Img, targetBtn, container, callback) {
     bulletHolesContainer.style.height = targetRect.height + 'px';
     bulletHolesContainer.style.pointerEvents = 'none';
     bulletHolesContainer.style.zIndex = '1500';
-    container.style.position = 'relative';
+                    container.style.position = 'relative';
     container.appendChild(bulletHolesContainer);
     
     function shootSingleBullet() {
@@ -1202,7 +1216,7 @@ function shootBulletsInitial(ak47Img, targetBtn, container, callback) {
         if (ak47ImgElement) {
             ak47ImgElement.style.transition = 'transform 0.1s ease-out';
             ak47ImgElement.style.transform = 'translateY(-50%) translateX(-5px) rotate(-2deg)';
-            setTimeout(() => {
+                    setTimeout(() => {
                 ak47ImgElement.style.transform = 'translateY(-50%)';
             }, 100);
         }
@@ -1224,9 +1238,9 @@ function shootBulletsInitial(ak47Img, targetBtn, container, callback) {
             const dy = targetY - ak47Y;
             bullet.style.transition = 'all 0.1s linear'; // Faster bullets
             bullet.style.transform = `translate(${dx}px, ${dy}px)`;
-        }, 10);
-        
-        setTimeout(() => {
+                    }, 10);
+                    
+                    setTimeout(() => {
             bullet.remove();
             
             const hole = document.createElement('div');
@@ -1270,7 +1284,7 @@ function addBleedingEffectInitial(button, container, callback) {
     container.style.position = 'relative';
     container.appendChild(bleedingOverlay);
     
-    setTimeout(() => {
+                setTimeout(() => {
         bleedingOverlay.style.transition = 'height 1.5s ease-out';
         bleedingOverlay.style.height = rect.height + 'px';
         
